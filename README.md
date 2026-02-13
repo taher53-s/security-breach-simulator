@@ -36,3 +36,16 @@
 - Expand scenario templates with branching playbooks.
 - Build a policy AI evaluation layer that scores policy adherence.
 - Wire a web UI / CLI for crafting custom scenario suites and triggering policy simulations.
+
+## API Backend
+
+The new FastAPI service sits under `backend/api` and exposes scenario + policy data for the simulator or a future dashboard.
+
+```bash
+cd backend/api
+pip install -r requirements.txt
+uvicorn app:app --reload
+```
+
+Visit `http://127.0.0.1:8000/docs` after starting the server to explore the endpoints.
+
