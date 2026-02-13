@@ -49,3 +49,13 @@ uvicorn app:app --reload
 
 Visit `http://127.0.0.1:8000/docs` after starting the server to explore the endpoints.
 
+## Detection Streamer
+
+The detection streamer lives in `backend/detection/streamer.py`. It reads each scenario phase, picks the linked policies, and prints a JSON event stream to mimic what a SIEM would receive. Run it with:
+
+```bash
+python backend/detection/streamer.py --scenario phoenix-phishing-lateral --interval 1.5
+```
+
+Stop with `Ctrl-C` when you have enough events to inspect or feed downstream.
+
