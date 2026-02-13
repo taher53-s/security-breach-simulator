@@ -1,0 +1,89 @@
+{
+  "scenario_id": "phoenix-phishing-lateral",
+  "title": "Phishing into Lateral Movement",
+  "description": "A realistic phishing campaign targets finance and HR teams, escalates privileges, and exfiltrates PII by pivoting through a legacy file server.",
+  "threat_actor": "Advanced Persistent Threat (APT-style)",
+  "entry_point": "Spear-phishing with credential harvesting via a cloned HR portal",
+  "objectives": [
+    "Capture employee credentials",
+    "Achieve domain admin privileges",
+    "Access finance database and extract quarterly PII"
+  ],
+  "assets": [
+    "Finance SQL database",
+    "HR credential vault",
+    "Legacy file server (\"data-archive\")",
+    "Email identity provider"
+  ],
+  "tags": [
+    "phishing",
+    "identity",
+    "lateral-movement",
+    "data-exfiltration"
+  ],
+  "phases": [
+    {
+      "name": "Initial Access",
+      "description": "Weaponized email impersonates HR, persuading a finance analyst to enter credentials into a fake SSO portal.",
+      "metrics": [
+        "Click-through rate",
+        "Suspicious login attempts flagged by email filters"
+      ],
+      "policy_in_play": [
+        "policy-identity-mfa",
+        "policy-email-protection"
+      ]
+    },
+    {
+      "name": "Privilege Escalation",
+      "description": "Using valid credentials and stolen tokens, a secondary workstation is compromised and credential dumping begins.",
+      "metrics": [
+        "New local accounts created",
+        "Token abuse alerts"
+      ],
+      "policy_in_play": [
+        "policy-endpoint-monitoring",
+        "policy-user-activity"
+      ]
+    },
+    {
+      "name": "Lateral Movement",
+      "description": "The adversary pivots through a vulnerable file server via SMB, moves to finance DB server, and activates a custom data collector.",
+      "metrics": [
+        "SMB session enumeration",
+        "Unusual remote execution"
+      ],
+      "policy_in_play": [
+        "policy-network-segmentation",
+        "policy-privileged-access"
+      ]
+    },
+    {
+      "name": "Exfiltration",
+      "description": "Data is packaged and uploaded via encrypted tunnel disguised as legitimate cloud backup traffic.",
+      "metrics": [
+        "Outbound data volume spikes",
+        "Unknown TLS endpoints"
+      ],
+      "policy_in_play": [
+        "policy-data-loss-prevention",
+        "policy-egress-monitoring"
+      ]
+    }
+  ],
+  "impact": {
+    "technical": "Compromise of finance systems and potential regulatory exposure",
+    "business": "Delayed quarterly reporting and reputational damage"
+  },
+  "detection_cues": [
+    "Anomalous MFA prompts",
+    "Persistence of a new service account",
+    "Burst transfer activity outside of business hours"
+  ],
+  "policy_links": [
+    "policy-identity-mfa",
+    "policy-email-protection",
+    "policy-endpoint-monitoring",
+    "policy-data-loss-prevention"
+  ]
+}

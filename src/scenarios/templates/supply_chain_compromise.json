@@ -1,0 +1,75 @@
+{
+  "scenario_id": "aurora-supply-chain",
+  "title": "Supply Chain Software Tampering",
+  "description": "A compromised vendor build pushes malicious code into an internally trusted deployment pipeline, affecting production services.",
+  "threat_actor": "Nation-state affiliated actor",
+  "entry_point": "Malicious update disguised as a dependency patch for a widely used middleware component",
+  "objectives": [
+    "Inject backdoor into build artifacts",
+    "Achieve persistence in production clusters",
+    "Maintain stealthy command-and-control"
+  ],
+  "assets": [
+    "CI/CD pipeline",
+    "Artifact repository",
+    "Customer-facing microservices",
+    "Monitoring and alerting stack"
+  ],
+  "tags": [
+    "supply-chain",
+    "devsecops",
+    "production"
+  ],
+  "phases": [
+    {
+      "name": "Recon",
+      "description": "Threat actor studies vendor release cadence and introduces a subtle backdoor into a library consumed by the organization.",
+      "metrics": [
+        "Altered library checksums",
+        "Unusual contributor IPs"
+      ],
+      "policy_in_play": [
+        "policy-code-signing",
+        "policy-vendor-assessment"
+      ]
+    },
+    {
+      "name": "Injection",
+      "description": "During automated build, the trojanized artifact is signed with a valid certificate and pushed to the artifact registry.",
+      "metrics": [
+        "New signing key usage",
+        "Artifact provenance mismatch"
+      ],
+      "policy_in_play": [
+        "policy-ci-cd-controls",
+        "policy-operator-separation"
+      ]
+    },
+    {
+      "name": "Propagation",
+      "description": "Production deploys pull the compromised artifact, establishing a covert control channel and hooking into telemetry ingestion.",
+      "metrics": [
+        "Suspicious outbound connections",
+        "Telemetry ingestion anomalies"
+      ],
+      "policy_in_play": [
+        "policy-network-monitoring",
+        "policy-observability"
+      ]
+    }
+  ],
+  "impact": {
+    "technical": "Undetected persistence in production pods and control over telemetry",
+    "business": "Potential damage to customer trust and regulatory penalties"
+  },
+  "detection_cues": [
+    "Unexpected dependency update",
+    "Telemetry agents contacting unknown domains",
+    "CI/CD pipeline jobs executed outside maintenance windows"
+  ],
+  "policy_links": [
+    "policy-vendor-assessment",
+    "policy-ci-cd-controls",
+    "policy-observability"
+  ]
+}

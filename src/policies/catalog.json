@@ -1,0 +1,98 @@
+[
+  {
+    "policy_id": "policy-identity-mfa",
+    "title": "Identity and Access Management — MFA for Privileged Workloads",
+    "domain": "identity",
+    "severity": "high",
+    "intent": "Ensure high-risk users confirm identity via MFA and enforce adaptive challenges on privileged sessions.",
+    "automation_hints": [
+      "Trigger automatic adaptive MFA challenge after anomalous login context",
+      "Temporarily revoke session tokens if MFA fails repeatedly"
+    ],
+    "tags": ["phishing", "identity", "detection"],
+    "recommended_actions": [
+      "Audit current MFA enforcement coverage",
+      "Integrate risk-based policies into identity provider"
+    ]
+  },
+  {
+    "policy_id": "policy-email-protection",
+    "title": "Email Security — Phishing Resilience",
+    "domain": "email",
+    "severity": "medium",
+    "intent": "Reduce phishing victim count by blocking weaponized emails, isolating attachments, and notifying recipients.",
+    "automation_hints": [
+      "Tag suspicious inbound emails and quarantine attachments",
+      "Notify SOC when high-risk emails bypass heuristics"
+    ],
+    "tags": ["phishing", "email"],
+    "recommended_actions": [
+      "Enable sandboxing for attachments from untrusted senders",
+      "Circuit-break high-risk URLs and alert recipients"
+    ]
+  },
+  {
+    "policy_id": "policy-endpoint-monitoring",
+    "title": "Endpoint Detection and Response",
+    "domain": "endpoint",
+    "severity": "high",
+    "intent": "Detect bulk credential dumping and unusual process chains within endpoint fleets.",
+    "automation_hints": [
+      "Trigger remote shell for forensic capture when LSA secrets read",
+      "Correlate new service creation with privilege escalation alerts"
+    ],
+    "tags": ["credential-dumping", "incident-response"],
+    "recommended_actions": [
+      "Deploy EDR agents with kernel sensors on all finance workstations",
+      "Build automation to isolate infected hosts within minutes"
+    ]
+  },
+  {
+    "policy_id": "policy-data-loss-prevention",
+    "title": "Data Loss Prevention — Structured Controls",
+    "domain": "data",
+    "severity": "high",
+    "intent": "Block or redact sensitive data exfiltration and alert when anomalous exports happen.",
+    "automation_hints": [
+      "Throttle large outbound transfers containing sensitive file signatures",
+      "Flag data accessed by unauthorized identities"
+    ],
+    "tags": ["data-exfiltration", "policy-ai"],
+    "recommended_actions": [
+      "Map and catalog datasets with sensitivity labels",
+      "Integrate DLP hooks with cloud storage providers"
+    ]
+  },
+  {
+    "policy_id": "policy-network-segmentation",
+    "title": "Network Segmentation — Lateral Movement Controls",
+    "domain": "network",
+    "severity": "medium",
+    "intent": "Limit east-west traffic and enforce micro-perimeters around critical assets.",
+    "automation_hints": [
+      "Alert on SMB/Remote Desktop traffic originating from low-risk zones",
+      "Automate firewall rule updates when segment boundaries shift"
+    ],
+    "tags": ["network", "segmentation"],
+    "recommended_actions": [
+      "Review segment policy every quarter",
+      "Deploy IDS/IPS sensors at segment egress"
+    ]
+  },
+  {
+    "policy_id": "policy-vendor-assessment",
+    "title": "Third-Party/Vendor Risk Assessment",
+    "domain": "supply-chain",
+    "severity": "medium",
+    "intent": "Continuously monitor third-party code changes, build pipelines, and interfaces for suspicious modifications.",
+    "automation_hints": [
+      "Scan vendor artifacts for anomalies and checksum mismatches",
+      "Score vendors by historical incident frequency"
+    ],
+    "tags": ["supply-chain", "policy-ai"],
+    "recommended_actions": [
+      "Require binary provenance attestation",
+      "Rotate CI/CD credentials tied to high-risk suppliers"
+    ]
+  }
+]
