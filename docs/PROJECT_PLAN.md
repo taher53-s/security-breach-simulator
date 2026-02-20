@@ -11,10 +11,10 @@
 - [x] API v0.2.0 with timeline endpoint
 - [x] Test scaffolding
 
-### Night (Now)
-- [ ] 3 more scenarios (credential theft, DDoS, zero-day)
-- [ ] Add scenario validation tests
-- [ ] API pagination & filtering improvements
+### Night (Now - Done ✅)
+- [x] 3 more scenarios (credential theft, DDoS, zero-day)
+- [x] Add scenario validation tests
+- [x] API pagination & filtering improvements
 
 ---
 
