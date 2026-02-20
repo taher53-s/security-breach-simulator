@@ -155,3 +155,59 @@ class TestAPIServer:
             assert '/scenarios' in content, "Missing /scenarios endpoint"
             assert '/policies' in content, "Missing /policies endpoint"
             assert '/dashboard' in content, "Missing /dashboard endpoint"
+
+
+class TestScenarioValidation:
+    """Enhanced scenario validation tests"""
+    
+    @pytest.fixture
+    def templates_dir(self):
+        return os.path.join(os.path.dirname(__file__), '..', 'src', 'scenarios', 'templates')
+    
+    def test_all_scenarios_have_valid_difficulty(self, templates_dir):
+        """Verify difficulty values are valid"""
+        valid_difficulties = ['beginner', 'intermediate', 'advanced', 'expert']
+        for filename in os.listdir(templates_dir):
+            if filename.endswith('.json'):
+                path = os.path.join(templates_dir, filename)
+                with open(path, 'r') as f:
+                    data = json.load(f)
+                    diff = data.get('difficulty', '').lower()
+                    assert diff in valid_difficulties, f"{filename} has invalid difficulty: {diff}"
+    
+    def test_all_scenarios_have_stages(self, templates_dir):
+        """Verify each scenario has at least one stage"""
+        for filename in os.listdir(templates_dir):
+            if filename.endswith('.json'):
+                path = os.path.join(templates_dir, filename)
+                with open(path, 'r') as f:
+                    data = json.load(f)
+                    stages = data.get('stages', [])
+                    assert len(stages) > 0, f"{filename} has no stages"
+    
+    def test_all_stages_have_required_fields(self, templates_dir):
+        """Verify each stage has required fields"""
+        for filename in os.listdir(templates_dir):
+            if filename.endswith('.json'):
+                path = os.path.join(templates_dir, filename)
+                with open(path, 'r') as f:
+                    data = json.load(f)
+                    for stage in data.get('stages', []):
+                        assert 'stage' in stage, f"{filename} stage missing 'stage'"
+                        assert 'name' in stage, f"{filename} stage missing 'name'"
+                        assert 'description' in stage, f"{filename} stage missing 'description'"
+    
+    def test_all_scenarios_have_policies_or_links(self, templates_dir):
+        """Verify scenarios have policy links"""
+        for filename in os.listdir(templates_dir):
+            if filename.endswith('.json'):
+                path = os.path.join(templates_dir, filename)
+                with open(path, 'r') as f:
+                    data = json.load(f)
+                    has_policies = (
+                        'policy_links' in data or 
+                        'policy_in_play' in data or
+                        'policies' in data
+                    )
+                    # At least one policy field should exist
+                    assert has_policies, f"{filename} missing policy references"
