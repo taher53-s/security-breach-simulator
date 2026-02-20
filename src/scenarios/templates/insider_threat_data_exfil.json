@@ -1,0 +1,71 @@
+{
+  "id": "insider_threat_data_exfil",
+  "name": "Insider Threat - Data Exfiltration",
+  "description": "An employee with privileged access attempts to exfiltrate sensitive customer data to a personal cloud storage.",
+  "severity": "critical",
+  "category": "insider_threat",
+  "attack_patterns": [
+    "T1041 - Exfiltration Over C2 Channel",
+    "T1567 - Exfiltration Over Web Service",
+    "T1005 - Data from Local System"
+  ],
+  "stages": [
+    {
+      "stage": 1,
+      "name": "Reconnaissance",
+      "description": "Employee searches for sensitive files containing customer PII",
+      "indicators": [
+        "Unusual file access patterns",
+        "Search queries for PII fields"
+      ],
+      "policies": [
+        "DLP-001",
+        "IAM-003"
+      ],
+      "duration_minutes": 5
+    },
+    {
+      "stage": 2,
+      "name": "Collection",
+      "description": "Employee copies files to local staging area",
+      "indicators": [
+        "Large file downloads",
+        "USB device connection",
+        "External drive access"
+      ],
+      "policies": [
+        "DLP-002",
+        "EPS-001"
+      ],
+      "duration_minutes": 10
+    },
+    {
+      "stage": 3,
+      "name": "Exfiltration",
+      "description": "Data transferred to personal cloud storage",
+      "indicators": [
+        "Outbound traffic to unknown IP",
+        "Cloud storage API calls",
+        "Large data transfer after hours"
+      ],
+      "policies": [
+        "DLP-003",
+        "NET-002"
+      ],
+      "duration_minutes": 15
+    }
+  ],
+  "objectives": [
+    "Detect unusual data access patterns",
+    "Block exfiltration to personal cloud",
+    "Identify the insider",
+    "Preserve evidence for investigation"
+  ],
+  "mitre_attack_techniques": [
+    "T1041",
+    "T1567",
+    "T1005"
+  ],
+  "difficulty": "hard",
+  "estimated_duration_minutes": 30
+}

@@ -1,0 +1,103 @@
+{
+  "id": "ransomware_attack",
+  "name": "Ransomware Attack - Lateral Spread",
+  "description": "Ransomware enters via phishing email and spreads laterally across the network, encrypting critical systems.",
+  "severity": "critical",
+  "category": "malware",
+  "attack_patterns": [
+    "T1566 - Phishing",
+    "T1486 - Data Encrypted for Impact",
+    "T1021 - Remote Services"
+  ],
+  "stages": [
+    {
+      "stage": 1,
+      "name": "Initial Access",
+      "description": "User opens malicious attachment from phishing email",
+      "indicators": [
+        "Suspicious email attachment opened",
+        "Macro execution in document",
+        "New process spawn"
+      ],
+      "policies": [
+        "EMAIL-001",
+        "EPS-002"
+      ],
+      "duration_minutes": 5
+    },
+    {
+      "stage": 2,
+      "name": "Execution",
+      "description": "Ransomware payload executes and establishes persistence",
+      "indicators": [
+        "PowerShell script execution",
+        "New scheduled task created",
+        "Antivirus disabled"
+      ],
+      "policies": [
+        "EPS-001",
+        "IAM-001"
+      ],
+      "duration_minutes": 10
+    },
+    {
+      "stage": 3,
+      "name": "Discovery",
+      "description": "Ransomware scans network for additional targets",
+      "indicators": [
+        "SMB enumeration",
+        "Network scan activities",
+        "Domain controller queries"
+      ],
+      "policies": [
+        "NET-001",
+        "NET-003"
+      ],
+      "duration_minutes": 10
+    },
+    {
+      "stage": 4,
+      "name": "Lateral Movement",
+      "description": "Malware spreads to other systems via SMB/RDP",
+      "indicators": [
+        "RDP connections to multiple hosts",
+        "SMB writes to remote shares",
+        "WMI exec calls"
+      ],
+      "policies": [
+        "NET-002",
+        "IAM-002"
+      ],
+      "duration_minutes": 15
+    },
+    {
+      "stage": 5,
+      "name": "Impact",
+      "description": "Files encrypted and ransom note displayed",
+      "indicators": [
+        "File encryption activity",
+        "New file extensions created",
+        "Ransom note files"
+      ],
+      "policies": [
+        "BACKUP-001",
+        "INC-001"
+      ],
+      "duration_minutes": 20
+    }
+  ],
+  "objectives": [
+    "Isolate infected systems quickly",
+    "Block lateral movement",
+    "Identify patient zero",
+    "Initiate backup recovery",
+    "Preserve forensic evidence"
+  ],
+  "mitre_attack_techniques": [
+    "T1566",
+    "T1486",
+    "T1021"
+  ],
+  "difficulty": "medium",
+  "estimated_duration_minutes": 60
+}
