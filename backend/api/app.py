@@ -85,8 +85,10 @@ def list_scenarios(
     severity: str | None = Query(None, description="Filter by severity"),
     category: str | None = Query(None, description="Filter by category"),
     search: str | None = Query(None, description="Search in name/description"),
+    limit: int = Query(50, ge=1, le=100, description="Max items to return"),
+    offset: int = Query(0, ge=0, description="Number of items to skip"),
 ) -> dict[str, Any]:
-    """List all available scenarios with optional filters"""
+    """List all available scenarios with optional filters and pagination"""
     scenarios, _ = _cached_catalog()
     
     # Apply filters
@@ -101,6 +103,9 @@ def list_scenarios(
             if search in s.get("name", "").lower() or search in s.get("description", "").lower()
         ]
     
+    total = len(scenarios)
+    paginated = scenarios[offset:offset + limit]
+    
     return {
         "items": [
             {
@@ -112,9 +117,11 @@ def list_scenarios(
                 "difficulty": scenario.get("difficulty"),
                 "estimated_duration_minutes": scenario.get("estimated_duration_minutes"),
             }
-            for scenario in scenarios
+            for scenario in paginated
         ],
-        "total": len(scenarios)
+        "total": total,
+        "limit": limit,
+        "offset": offset
     }
 
 
@@ -171,8 +178,10 @@ def get_scenario_timeline(scenario_id: str) -> dict[str, Any]:
 def list_policies(
     domain: str | None = Query(None, description="Filter by domain"),
     severity: str | None = Query(None, description="Filter by severity"),
+    limit: int = Query(50, ge=1, le=100, description="Max items to return"),
+    offset: int = Query(0, ge=0, description="Number of items to skip"),
 ) -> dict[str, Any]:
-    """List all policies with optional filters"""
+    """List all policies with optional filters and pagination"""
     _, policies = _cached_catalog()
     
     if domain:
@@ -180,9 +189,14 @@ def list_policies(
     if severity:
         policies = [p for p in policies if p.get("severity", "").lower() == severity.lower()]
     
+    total = len(policies)
+    paginated = policies[offset:offset + limit]
+    
     return {
-        "items": policies,
-        "total": len(policies)
+        "items": paginated,
+        "total": total,
+        "limit": limit,
+        "offset": offset
     }
 
 
