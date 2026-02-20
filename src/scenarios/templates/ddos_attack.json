@@ -1,0 +1,87 @@
+{
+  "id": "ddos_attack",
+  "name": "DDoS Attack - Service Disruption",
+  "description": "Distributed Denial of Service attack overwhelms servers, making services unavailable to legitimate users.",
+  "severity": "critical",
+  "category": "availability",
+  "attack_patterns": [
+    "T1498 - Network Denial of Service",
+    "T1499 - Endpoint Denial of Service",
+    "T0826 - Denial of Service"
+  ],
+  "stages": [
+    {
+      "stage": 1,
+      "name": "Reconnaissance",
+      "description": "Attacker scans for vulnerabilities and identifies target services",
+      "indicators": [
+        "Unusual scan patterns",
+        "Port scanning activity",
+        "Banner grabbing attempts"
+      ],
+      "policies": [
+        "NET-001",
+        "IPS-001"
+      ],
+      "duration_minutes": 5
+    },
+    {
+      "stage": 2,
+      "name": "Botnet Activation",
+      "description": "Attacker activates compromised devices for attack",
+      "indicators": [
+        "Unusual outbound traffic",
+        "C2 server communication",
+        "Increased DNS queries"
+      ],
+      "policies": [
+        "NET-002",
+        "IPS-002"
+      ],
+      "duration_minutes": 10
+    },
+    {
+      "stage": 3,
+      "name": "Attack Execution",
+      "description": "DDoS attack begins, overwhelming target systems",
+      "indicators": [
+        "Traffic spike from multiple sources",
+        "Server CPU at 100%",
+        "Service timeouts",
+        "Network latency increase"
+      ],
+      "policies": [
+        "NET-003",
+        "IPS-003"
+      ],
+      "duration_minutes": 15
+    },
+    {
+      "stage": 4,
+      "name": "Service Degradation",
+      "description": "Services become slow or unavailable",
+      "indicators": [
+        "503 errors",
+        "Connection failures",
+        "User complaints"
+      ],
+      "policies": [
+        "INC-001",
+        "CDN-001"
+      ],
+      "duration_minutes": 20
+    }
+  ],
+  "objectives": [
+    "Identify attack early",
+    "Enable DDoS protection",
+    "Scale infrastructure",
+    "Communicate with stakeholders"
+  ],
+  "mitre_attack_techniques": [
+    "T1498",
+    "T1499"
+  ],
+  "difficulty": "easy",
+  "estimated_duration_minutes": 50
+}
