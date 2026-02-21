@@ -53,6 +53,9 @@ def _load_policies() -> list[dict[str, Any]]:
     data = _load_json(POLICY_FILE)
     if isinstance(data, list):
         return data
+    if isinstance(data, dict):
+        policies = data.get("policies", [])
+        return policies if isinstance(policies, list) else []
     return []
 
 
