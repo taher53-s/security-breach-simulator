@@ -32,7 +32,13 @@ class BreachGenerator:
 
     def _load_policies(self) -> dict[str, dict[str, Any]]:
         data = json.loads(POLICY_FILE.read_text(encoding="utf-8"))
-        return {p["policy_id"]: p for p in data.get("policies", [])}
+        if isinstance(data, dict):
+            items = data.get("policies", [])
+        elif isinstance(data, list):
+            items = data
+        else:
+            items = []
+        return {p["policy_id"]: p for p in items if isinstance(p, dict) and "policy_id" in p}
 
     def list_scenarios(self) -> list[dict[str, Any]]:
         """List all available scenarios"""
