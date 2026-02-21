@@ -28,23 +28,27 @@ def _load_scenarios() -> list[dict[str, Any]]:
 
 def _load_policies() -> list[dict[str, Any]]:
     data = _load_json(POLICY_FILE)
+    if isinstance(data, dict):
+        policies = data.get("policies", [])
+        return policies if isinstance(policies, list) else []
     return data if isinstance(data, list) else []
 
 
 def _build_phases(scenario: dict[str, Any]) -> list[dict[str, Any]]:
     phases = []
-    for phase in scenario.get("phases", []):
-        phase_id = phase.get("name", "phase").lower().replace(" ", "_")
-        policies = phase.get("policy_in_play", [])
+    source_stages = scenario.get("stages") or scenario.get("phases") or []
+    for stage in source_stages:
+        phase_id = str(stage.get("name", "phase")).lower().replace(" ", "_")
+        policies = stage.get("policies") or stage.get("policy_in_play", [])
         phases.append(
             {
                 "phase_id": f"{scenario.get('scenario_id')}::{phase_id}",
                 "scenario_id": scenario.get("scenario_id"),
-                "phase_name": phase.get("name"),
-                "description": phase.get("description"),
-                "metrics": phase.get("metrics", []),
+                "phase_name": stage.get("name"),
+                "description": stage.get("description"),
+                "metrics": stage.get("metrics", []),
                 "policy_ids": policies,
-                "severity": random.choice(["low", "medium", "high"]),
+                "severity": scenario.get("severity") or random.choice(["low", "medium", "high"]),
             }
         )
     return phases
@@ -54,8 +58,14 @@ def _match_policies(policy_ids: list[str], policies: list[dict[str, Any]]) -> li
     return [policy for policy in policies if policy.get("policy_id") in policy_ids]
 
 
-def _stream_phases(phase_queue: list[dict[str, Any]], policies: list[dict[str, Any]], interval: float) -> None:
+def _stream_phases(
+    phase_queue: list[dict[str, Any]],
+    policies: list[dict[str, Any]],
+    interval: float,
+    cycles: int | None,
+) -> None:
     print("Starting detection stream (ctrl-c to stop)...")
+    emitted = 0
     while True:
         for phase in phase_queue:
             event = {
@@ -68,6 +78,9 @@ def _stream_phases(phase_queue: list[dict[str, Any]], policies: list[dict[str, A
                 "policy_rationale": [p.get("intent") for p in _match_policies(phase["policy_ids"], policies)],
             }
             print(json.dumps(event))
+            emitted += 1
+            if cycles is not None and emitted >= cycles:
+                return
             time.sleep(interval)
 
 
@@ -77,9 +90,10 @@ def _default_scenario_id() -> str | None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Stream detection events from scenario phases.")
+    parser = argparse.ArgumentParser(description="Stream detection events from scenario stages.")
     parser.add_argument("--scenario", required=False, help="Scenario ID to stream (defaults to first).")
     parser.add_argument("--interval", type=float, default=2.0, help="Seconds between phase events.")
+    parser.add_argument("--cycles", type=int, help="Stop after emitting N events (for smoke tests).")
     args = parser.parse_args()
 
     scenarios = _load_scenarios()
@@ -97,9 +111,9 @@ def main() -> None:
     policies = _load_policies()
     phases = _build_phases(scenario)
     if not phases:
-        raise SystemExit("Scenario contains no phases to stream.")
+        raise SystemExit("Scenario contains no stages/phases to stream.")
 
-    _stream_phases(phases, policies, args.interval)
+    _stream_phases(phases, policies, args.interval, args.cycles)
 
 
 if __name__ == "__main__":
