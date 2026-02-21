@@ -11,6 +11,12 @@
 - [x] API v0.2.0 with timeline endpoint
 - [x] Test scaffolding
 
+### Morning Batch Update (Feb 21, 2026 - 10:32 to 10:45 IST) ✅
+- [x] Fixed API policy loader bug for object-based catalog.json
+- [x] Added seeded random generation in CLI/generator
+- [x] Fixed detection streamer to support stage-based templates
+- [x] Added stdlib unittest smoke suite and refreshed README usage/test docs
+
 ### Night (Now - Done ✅)
 - [x] 3 more scenarios (credential theft, DDoS, zero-day)
 - [x] Add scenario validation tests
