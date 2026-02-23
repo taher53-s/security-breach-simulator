@@ -1,0 +1,1 @@
+print('Fix for bug B for night batch v2')

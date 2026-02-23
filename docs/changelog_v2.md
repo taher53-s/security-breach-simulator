@@ -1,0 +1,1 @@
+Changelog for night batch v2.
