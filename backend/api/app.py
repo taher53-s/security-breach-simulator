@@ -94,20 +94,27 @@ def list_scenarios(
     """List all available scenarios with optional filters and pagination"""
     scenarios, _ = _cached_catalog()
     
+    # Handle Query objects (when called directly in tests without FastAPI routing)
+    severity_val = severity.default if hasattr(severity, 'default') else severity
+    category_val = category.default if hasattr(category, 'default') else category
+    search_val = search.default if hasattr(search, 'default') else search
+    limit_val = limit.default if hasattr(limit, 'default') else limit
+    offset_val = offset.default if hasattr(offset, 'default') else offset
+    
     # Apply filters
-    if severity:
-        scenarios = [s for s in scenarios if s.get("severity", "").lower() == severity.lower()]
-    if category:
-        scenarios = [s for s in scenarios if s.get("category", "").lower() == category.lower()]
-    if search:
-        search = search.lower()
+    if severity_val:
+        scenarios = [s for s in scenarios if s.get("severity", "").lower() == severity_val.lower()]
+    if category_val:
+        scenarios = [s for s in scenarios if s.get("category", "").lower() == category_val.lower()]
+    if search_val:
+        search_val = search_val.lower()
         scenarios = [
             s for s in scenarios
-            if search in s.get("name", "").lower() or search in s.get("description", "").lower()
+            if search_val in s.get("name", "").lower() or search_val in s.get("description", "").lower()
         ]
     
     total = len(scenarios)
-    paginated = scenarios[offset:offset + limit]
+    paginated = scenarios[offset_val:offset_val + limit_val]
     
     return {
         "items": [
@@ -123,8 +130,8 @@ def list_scenarios(
             for scenario in paginated
         ],
         "total": total,
-        "limit": limit,
-        "offset": offset
+        "limit": limit_val,
+        "offset": offset_val
     }
 
 
@@ -251,19 +258,25 @@ def list_policies(
     """List all policies with optional filters and pagination"""
     _, policies = _cached_catalog()
     
-    if domain:
-        policies = [p for p in policies if p.get("domain", "").lower() == domain.lower()]
-    if severity:
-        policies = [p for p in policies if p.get("severity", "").lower() == severity.lower()]
+    # Handle Query objects (when called directly in tests without FastAPI routing)
+    domain_val = domain.default if hasattr(domain, 'default') else domain
+    severity_val = severity.default if hasattr(severity, 'default') else severity
+    limit_val = limit.default if hasattr(limit, 'default') else limit
+    offset_val = offset.default if hasattr(offset, 'default') else offset
+    
+    if domain_val:
+        policies = [p for p in policies if p.get("domain", "").lower() == domain_val.lower()]
+    if severity_val:
+        policies = [p for p in policies if p.get("severity", "").lower() == severity_val.lower()]
     
     total = len(policies)
-    paginated = policies[offset:offset + limit]
+    paginated = policies[offset_val:offset_val + limit_val]
     
     return {
         "items": paginated,
         "total": total,
-        "limit": limit,
-        "offset": offset
+        "limit": limit_val,
+        "offset": offset_val
     }
 
 
