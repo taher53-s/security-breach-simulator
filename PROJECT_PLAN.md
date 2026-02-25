@@ -1,47 +1,76 @@
-# Security Breach Simulator - New Features Batch
+# Security Breach Simulator - Project Plan
 
-Progress update (as of 2026-02-25 09:45 Asia/Calcutta):
+## Project Overview
+A tool to practice handling cyber attacks through realistic breach scenarios.
 
-## New Features Commits (2026-02-25)
+## Version 0.3.0 - Production Ready (Feb 2026)
+
+### Features Implemented
+
+#### Core Features
+- ✅ 7 scenario templates (ransomware, phishing, DDoS, insider threat, etc.)
+- ✅ Breach generator with CLI
+- ✅ Category filtering
+- ✅ Markdown export
+- ✅ FastAPI server
+
+#### Scoring & Replay
+- ✅ Comprehensive scoring system (detection, compliance, efficiency)
+- ✅ Replay system for scenario re-runs
+- ✅ Grade calculation (A-F)
+
+#### Difficulty & Audit
+- ✅ Difficulty presets (Easy/Medium/Hard/Expert)
+- ✅ Timer system respecting difficulty
+- ✅ Full audit logging with JSONL format
+
+#### Analytics
+- ✅ Stats dashboard
+- ✅ Leaderboard
+- ✅ Trend analysis
+- ✅ Policy compliance tracking
+
+#### Deployment
+- ✅ Dockerfile
+- ✅ docker-compose.yml
+- ✅ GitHub Actions CI/CD
+
+### Recent Commits (v0.3.0)
 
 | Hash | Summary |
 |------|---------|
-| 84bca93 | feat: Add scoring and replay system |
+| 89feeeb | feat: Add health check and metrics endpoints to API |
+| 428ffc5 | feat: Add stats dashboard for player analytics |
+| 4d4d79a | feat: Add Docker, CI/CD, and difficulty tests |
+| 57dca95 | feat: Add difficulty presets and audit logging systems |
+| 33ca780 | docs: Update PROJECT_PLAN.md with scoring and replay features |
 | 6d7f285 | test: Add tests for scoring and replay systems |
+| 84bca93 | feat: Add scoring and replay system |
+| bbba5e3 | docs: Update PROJECT_PLAN.md with morning batch v2 progress |
+| 70f7621 | fix(tests): Update test expectations and add missing policy links |
+| 8c20087 | fix(api): Handle Query objects in direct function calls for testing |
+| 10ba75f | fix(scenarios): Fix invalid difficulty values to match expected values |
+| 137c892 | fix(scenarios): Standardize field names across scenario templates |
 
-### Features Added:
-1. **Scoring System** (src/scoring.py)
-   - ScoringEngine tracks player performance
-   - Detection time, steps taken, policy compliance scoring
-   - Grade calculation (A-F) based on total score
-   - Save/load scores to .scores directory
+### Test Results
+- All smoke tests passing
+- Unit tests for scoring, replay, difficulty, API
 
-2. **Replay System** (src/replay.py)
-   - ReplayEngine for re-running scenarios with same seed
-   - Compare runs for performance analysis
-   - Save replays to .runs directory
+### Deployment
+- Docker: `docker build -t security-breach-simulator .`
+- Docker Compose: `docker-compose up`
+- API: `uvicorn backend.api.app:app --reload`
 
-3. **CLI Commands**
-   - `breach score --last` - Show last run score
-   - `breach score --run-id <id>` - Show specific run
-   - `breach replay` - List recent replays
-   - `breach replay --run-id <id>` - Show replay details
+### API Endpoints
+- `GET /health` - Health check
+- `GET /metrics` - Basic metrics
+- `GET /scenarios` - List scenarios
+- `GET /policies` - List policies
+- `GET /dashboard/stats` - Dashboard stats
+- `GET /scenarios/{id}/export?format=markdown` - Export scenario
 
-## Previous Batches
-
-### Morning/Night Batch v2 (earlier):
-| Hash | Summary |
-|------|---------|
-| df8fc9d | feat: Add category filtering and markdown export to generator |
-| 57474f2 | test: Add pure unittest test suite |
-| 3cdc6ea | feat(api): Add markdown export endpoint |
-
-Current status:
-- ✅ Scoring system implemented
-- ✅ Replay system implemented  
-- ✅ CLI commands added
-- ✅ Tests passing (25 total)
-- All commits pushed to origin/main
-
-Next actions:
-- None - batch complete.
+## Roadmap (Future)
+- Web UI dashboard
+- Multiplayer mode
+- Real-time collaboration
+- Advanced analytics
