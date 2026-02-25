@@ -81,6 +81,43 @@ def _match_policies(policy_ids: list[str]) -> list[dict[str, Any]]:
     return [policy for policy in policies if policy.get("policy_id") in policy_ids]
 
 
+# ==================== HEALTH CHECK ====================
+
+@app.get("/health")
+def health_check() -> dict[str, Any]:
+    """Health check endpoint for monitoring"""
+    import sys
+    import os
+    
+    # Check file availability
+    checks = {
+        "scenarios_dir": SCENARIOS_DIR.exists(),
+        "policy_file": POLICY_FILE.exists(),
+    }
+    
+    all_ok = all(checks.values())
+    
+    return {
+        "status": "healthy" if all_ok else "degraded",
+        "version": "0.3.0",
+        "timestamp": datetime.now().isoformat(),
+        "checks": checks,
+        "python_version": sys.version.split()[0],
+    }
+
+
+@app.get("/metrics")
+def get_metrics() -> dict[str, Any]:
+    """Basic metrics endpoint"""
+    scenarios, policies = _cached_catalog()
+    
+    return {
+        "scenarios_count": len(scenarios),
+        "policies_count": len(policies),
+        "api_version": "0.3.0"
+    }
+
+
 # ==================== SCENARIOS ====================
 
 @app.get("/scenarios")
