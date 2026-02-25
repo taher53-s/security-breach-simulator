@@ -101,14 +101,16 @@ class TestPolicyCatalog:
         path = os.path.join(policies_dir, 'catalog.json')
         with open(path, 'r') as f:
             data = json.load(f)
-            assert 'policies' in data, "Catalog missing 'policies' key"
-            assert len(data['policies']) > 0, "No policies in catalog"
+            # Catalog is a direct list of policies
+            assert isinstance(data, list), "Catalog should be a list"
+            assert len(data) > 0, "No policies in catalog"
     
     def test_policies_have_required_fields(self, policies_dir):
         path = os.path.join(policies_dir, 'catalog.json')
         with open(path, 'r') as f:
             data = json.load(f)
-            for policy in data.get('policies', []):
+            # Catalog is a direct list of policies
+            for policy in data:
                 assert 'policy_id' in policy, "Policy missing policy_id"
                 assert 'title' in policy, "Policy missing title"
 
@@ -136,9 +138,9 @@ class TestBreachGenerator:
     
     def test_generate_nonexistent_scenario(self):
         generator = BreachGenerator()
-        # Should handle gracefully
-        result = generator.generate("nonexistent_scenario")
-        # Generator should either return None or raise appropriate error
+        # Should raise ValueError for unknown scenarios
+        with pytest.raises(ValueError, match="Unknown scenario"):
+            generator.generate("nonexistent_scenario")
 
 
 class TestAPIServer:
