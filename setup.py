@@ -10,7 +10,7 @@ exec((Path(__file__).parent / "src" / "version.py").read_text(), version)
 
 setup(
     name="security-breach-simulator",
-    version=version.get("__version__", "0.3.0"),
+    version=version.get("__version__", "1.0.0"),
     author="Security Team",
     author_email="security@example.com",
     description="Security Breach Simulator - Practice handling cyber attacks",
