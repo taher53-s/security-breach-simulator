@@ -240,12 +240,14 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Security Breach Simulator")
-    parser.add_argument("command", choices=["list", "generate", "summary", "export"])
+    parser.add_argument("command", choices=["list", "generate", "summary", "export", "score", "replay"])
     parser.add_argument("--scenario", help="Scenario ID")
     parser.add_argument("--severity", help="Severity filter for random generation")
     parser.add_argument("--category", help="Category filter for listing scenarios")
     parser.add_argument("--format", choices=["json", "markdown"], default="json", help="Output format for generate/export")
     parser.add_argument("--seed", type=int, help="Optional RNG seed for deterministic output")
+    parser.add_argument("--run-id", help="Run ID for score/replay commands")
+    parser.add_argument("--last", action="store_true", help="Use last run for score")
 
     args = parser.parse_args()
     generator = BreachGenerator(seed=args.seed)
@@ -272,6 +274,39 @@ def main():
         else:
             result = generator.generate(args.scenario)
             print(json.dumps(result, indent=2))
+
+    elif args.command == "score":
+        from ..scoring import list_scores, load_score
+        if args.last:
+            scores = list_scores(limit=1)
+            if scores:
+                args.run_id = scores[0]["run_id"]
+        
+        if not args.run_id:
+            print("Recent scores:")
+            for s in list_scores(5):
+                print(f"  {s['run_id']}: {s['scenario_id']} - Score: {s['total_score']} ({s['grade']})")
+        else:
+            score = load_score(args.run_id)
+            if score:
+                print(json.dumps(score.to_dict(), indent=2))
+            else:
+                print(f"Run not found: {args.run_id}")
+
+    elif args.command == "replay":
+        from ..replay import ReplayEngine
+        engine = ReplayEngine()
+        
+        if args.run_id:
+            run = engine.get_run(args.run_id)
+            if run:
+                print(json.dumps(run.to_dict(), indent=2))
+            else:
+                print(f"Replay run not found: {args.run_id}")
+        else:
+            print("Recent replays:")
+            for r in engine.list_runs(5):
+                print(f"  {r['run_id']}: {r['scenario_id']} (seed={r['seed']})")
 
     elif args.command == "summary":
         if not args.scenario:
