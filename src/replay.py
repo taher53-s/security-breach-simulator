@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Any
 from dataclasses import dataclass, asdict
 
-from .scoring import load_score, ScenarioScore
+from scoring import load_score, ScenarioScore
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
