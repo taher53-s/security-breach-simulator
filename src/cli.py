@@ -49,16 +49,17 @@ def cmd_generate(args):
     else:
         result = gen.generate_random(severity=args.severity)
     
-    print(f"\n🎯 Generated: {result['scenario_id']}")
+    scenario_name = args.scenario or result.get('scenario', {}).get('name', 'Random')
+    print(f"\n🎯 Generated: {scenario_name}")
     print("-" * 60)
-    print(f"Name: {result.get('name', 'N/A')}")
-    print(f"Severity: {result.get('severity', 'N/A')}")
-    print(f"Category: {result.get('category', 'N/A')}")
-    print(f"Stages: {len(result.get('stages', result.get('phases', [])))}")
+    print(f"Name: {scenario_name}")
+    print(f"Timeline events: {len(result.get('timeline', []))}")
+    print(f"Duration: {result.get('total_duration_minutes', 'N/A')} minutes")
     
     if args.verbose:
-        print("\n📝 Narrative:")
-        print(result.get('narrative', 'No narrative')[:500])
+        print("\n📝 Timeline:")
+        for event in result.get('timeline', [])[:5]:
+            print(f"  [{event.get('stage', '?')}] {event.get('event_type', 'event')}: {event.get('description', '')[:60]}")
 
 
 def cmd_score(args):
@@ -88,7 +89,8 @@ def cmd_score(args):
         # Show last score
         scores = list_scores(limit=1)
         if scores:
-            cmd_score argparse.Namespace(run_id=scores[0]['run_id'], list=False, limit=10, json=False, verbose=False)
+            print(f"\n📊 Latest Score: {scores[0]['total_score']} pts ({scores[0]['grade']})")
+            print(f"   Run: {scores[0]['run_id']} | Scenario: {scores[0]['scenario_id']}")
         else:
             print("No scores found")
 
