@@ -374,3 +374,15 @@ def health_check() -> dict[str, Any]:
         "version": "0.2.0",
         "timestamp": datetime.utcnow().isoformat()
     }
+
+
+@app.get("/")
+def serve_frontend():
+    """Serve the frontend"""
+    from fastapi.responses import FileResponse
+    # ROOT_DIR is /workspace, we need /workspace/security-breach-simulator/frontend
+    project_dir = Path(__file__).resolve().parents[2]
+    frontend_path = project_dir / "frontend" / "index.html"
+    if frontend_path.exists():
+        return FileResponse(frontend_path)
+    return {"message": "Frontend not found", "path": str(frontend_path)}
