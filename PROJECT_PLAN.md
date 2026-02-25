@@ -47,6 +47,13 @@ A professional-grade security training tool for practicing incident response thr
 - `breach stats` - Show statistics
 - `breach difficulty` - Show presets
 - `breach serve` - Start API
+- `breach webcast` - Stream scenario via SSE
+- `breach visualize` - ASCII timeline visualization
+
+### Real-time & Visualization ✅
+- Server-Sent Events (SSE) streaming
+- ASCII timeline visualization (full/summary/compact)
+- Severity-based color coding (🔴🟠🟡🟢)
 
 ---
 
