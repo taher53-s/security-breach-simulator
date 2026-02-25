@@ -386,3 +386,14 @@ def serve_frontend():
     if frontend_path.exists():
         return FileResponse(frontend_path)
     return {"message": "Frontend not found", "path": str(frontend_path)}
+
+
+@app.get("/soc")
+def serve_soc():
+    """Serve the SOC Simulator"""
+    from fastapi.responses import FileResponse
+    project_dir = Path(__file__).resolve().parents[2]
+    soc_path = project_dir / "frontend" / "soc.html"
+    if soc_path.exists():
+        return FileResponse(soc_path)
+    return {"message": "SOC not found"}

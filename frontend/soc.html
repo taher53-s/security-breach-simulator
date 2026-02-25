@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Operations Center | Live Simulator</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #050508;
+            --bg-panel: #0a0a12;
+            --bg-card: #0d0d18;
+            --accent: #00ff88;
+            --accent-glow: #00ff8844;
+            --danger: #ff2d55;
+            --danger-glow: #ff2d5544;
+            --warning: #ffaa00;
+            --warning-glow: #ffaa0044;
+            --info: #00d4ff;
+            --info-glow: #00d4ff44;
+            --text: #e8e8e8;
+            --text-dim: #6a6a7a;
+            --border: #1a1a2a;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated grid background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                linear-gradient(90deg, transparent 49%, #00ff8808 50%, transparent 51%),
+                linear-gradient(0deg, transparent 49%, #00ff8808 50%, transparent 51%);
+            background-size: 60px 60px;
+            animation: gridMove 20s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(60px); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background: linear-gradient(180deg, var(--bg-panel) 0%, transparent 100%);
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1rem;
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 3px;
+        }
+
+        .logo span { color: var(--accent); text-shadow: 0 0 20px var(--accent-glow); }
+        .logo .live { color: var(--danger); animation: pulse 1.5s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .h-stat {
+            text-align: center;
+        }
+
+        .h-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .h-stat-value.accent { color: var(--accent); }
+        .h-stat-value.danger { color: var(--danger); }
+        .h-stat-value.warning { color: var(--warning); }
+
+        .h-stat-label {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 1rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Panels */
+        .panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 0.8rem 1rem;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .panel-title::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        .panel-content {
+            padding: 1rem;
+        }
+
+        /* Network Map */
+        .network-map {
+            position: relative;
+            height: 450px;
+            background: 
+                radial-gradient(ellipse at center, #00ff8805 0%, transparent 70%),
+                var(--bg-dark);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .node {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .node:hover {
+            transform: scale(1.1);
+            border-color: var(--accent);
+        }
+
+        .node::after {
+            content: attr(data-name);
+            position: absolute;
+            bottom: -25px;
+            font-size: 0.6rem;
+            color: var(--text-dim);
+            white-space: nowrap;
+        }
+
+        .node.server { border-color: var(--info); }
+        .node.workstation { border-color: var(--text-dim); }
+        .node.firewall { border-color: var(--warning); }
+        .node.compromised { 
+            border-color: var(--danger); 
+            animation: compromisedPulse 0.5s infinite;
+            background: var(--danger-glow);
+        }
+
+        @keyframes compromisedPulse {
+            0%, 100% { box-shadow: 0 0 20px var(--danger-glow); }
+            50% { box-shadow: 0 0 40px var(--danger); }
+        }
+
+        /* Attack line */
+        .attack-line {
+            position: absolute;
+            height: 2px;
+            background: var(--danger);
+            transform-origin: left center;
+            animation: attackFlow 1s linear infinite;
+            z-index: 5;
+            box-shadow: 0 0 10px var(--danger);
+        }
+
+        @keyframes attackFlow {
+            0% { opacity: 1; }
+            100% { opacity: 0.3; }
+        }
+
+        /* Timer */
+        .timer-container {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--bg-card);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            text-align: center;
+            z-index: 20;
+        }
+
+        .timer-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--danger);
+            text-shadow: 0 0 20px var(--danger-glow);
+        }
+
+        .timer-label {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        .timer-critical .timer-value {
+            animation: timerBlink 0.5s infinite;
+        }
+
+        @keyframes timerBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Score Display */
+        .score-display {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: var(--bg-card);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--accent);
+            z-index: 20;
+        }
+
+        .score-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .score-label {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        /* Alerts Panel */
+        .alerts-panel {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .alerts-list {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+
+        .alert {
+            padding: 0.8rem;
+            margin-bottom: 0.5rem;
+            background: var(--bg-card);
+            border-radius: 8px;
+            border-left: 3px solid var(--text-dim);
+            animation: alertSlide 0.3s ease;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .alert:hover {
+            background: var(--bg-hover);
+            transform: translateX(5px);
+        }
+
+        @keyframes alertSlide {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .alert.critical { border-left-color: var(--danger); }
+        .alert.warning { border-left-color: var(--warning); }
+        .alert.info { border-left-color: var(--info); }
+
+        .alert-time {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+        }
+
+        .alert-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin: 0.3rem 0;
+        }
+
+        .alert-desc {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        /* Actions Panel */
+        .actions-panel {
+            margin-top: 1rem;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .action-btn:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent);
+            transform: translateX(5px);
+        }
+
+        .action-btn .points {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* AI Copilot */
+        .copilot {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--bg-card) 0%, #0a1525 100%);
+            border-radius: 8px;
+            border: 1px solid var(--info);
+        }
+
+        .copilot-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.8rem;
+            font-size: 0.75rem;
+            color: var(--info);
+            text-transform: uppercase;
+        }
+
+        .copilot-msg {
+            font-size: 0.8rem;
+            line-height: 1.5;
+            color: var(--text-dim);
+        }
+
+        .copilot-msg .highlight {
+            color: var(--accent);
+        }
+
+        /* Game Status */
+        .game-status {
+            padding: 1rem;
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .status-text {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .status-text.ready { color: var(--accent); }
+        .status-text.active { color: var(--warning); }
+        .status-text.danger { color: var(--danger); }
+        .status-text.win { color: var(--accent); text-shadow: 0 0 20px var(--accent); }
+
+        /* Start Button */
+        .start-btn {
+            width: 100%;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, var(--accent) 0%, #00cc6a 100%);
+            border: none;
+            border-radius: 12px;
+            color: var(--bg-dark);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            transition: all 0.3s;
+            box-shadow: 0 0 30px var(--accent-glow);
+        }
+
+        .start-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 50px var(--accent-glow);
+        }
+
+        /* Streak Bar */
+        .streak-bar {
+            margin-top: 1rem;
+        }
+
+        .streak-label {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-bottom: 0.3rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .streak-track {
+            height: 8px;
+            background: var(--bg-card);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .streak-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--warning));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        /* Leaderboard Mini */
+        .leaderboard {
+            margin-top: 1rem;
+        }
+
+        .lb-entry {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.8rem;
+        }
+
+        .lb-entry:first-child {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-dim);
+            font-size: 0.7rem;
+            margin-top: 2rem;
+        }
+
+        /* Sound notification */
+        .sound-toggle {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 0.75rem;
+            z-index: 100;
+        }
+
+        .sound-toggle.on { border-color: var(--accent); color: var(--accent); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <span class="live">●</span> SECURITY<span>OPS</span>CENTER
+            </div>
+            <div class="header-stats">
+                <div class="h-stat">
+                    <div class="h-stat-value accent" id="score">0</div>
+                    <div class="h-stat-label">Score</div>
+                </div>
+                <div class="h-stat">
+                    <div class="h-stat-value danger" id="threats">0</div>
+                    <div class="h-stat-label">Threats</div>
+                </div>
+                <div class="h-stat">
+                    <div class="h-stat-value warning" id="streak">0</div>
+                    <div class="h-stat-label">Streak</div>
+                </div>
+                <div class="h-stat">
+                    <div class="h-stat-value" id="level">1</div>
+                    <div class="h-stat-label">Level</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-grid">
+            <!-- Network Map -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-title">Network Threat Map</span>
+                    <span id="connectionStatus" style="color: var(--accent); font-size: 0.7rem;">● CONNECTED</span>
+                </div>
+                <div class="panel-content">
+                    <div class="network-map" id="networkMap">
+                        <div class="score-display">
+                            <div class="score-value" id="mapScore">0</div>
+                            <div class="score-label">Score</div>
+                        </div>
+                        <div class="timer-container" id="timerContainer">
+                            <div class="timer-value" id="timer">00:00</div>
+                            <div class="timer-label">Time Remaining</div>
+                        </div>
+                        
+                        <!-- Nodes will be added by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar -->
+            <div>
+                <!-- Alerts -->
+                <div class="panel alerts-panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Live Alerts</span>
+                        <span id="alertCount" style="color: var(--danger); font-size: 0.7rem;">0 NEW</span>
+                    </div>
+                    <div class="panel-content">
+                        <div class="alerts-list" id="alertsList">
+                            <div class="alert info">
+                                <div class="alert-time">SYSTEM</div>
+                                <div class="alert-title">SOC Simulator Ready</div>
+                                <div class="alert-desc">Click START to begin simulation</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="panel actions-panel" style="margin-top: 1rem;">
+                    <div class="panel-header">
+                        <span class="panel-title">Response Actions</span>
+                    </div>
+                    <div class="panel-content">
+                        <button class="start-btn" id="startBtn" onclick="startGame()">
+                            ▶ START SIMULATION
+                        </button>
+
+                        <div id="actionsContainer" style="display: none;">
+                            <button class="action-btn" onclick="takeAction('isolate')">
+                                <span>🔒 Isolate Affected System</span>
+                                <span class="points">+100 pts</span>
+                            </button>
+                            <button class="action-btn" onclick="takeAction('analyze')">
+                                <span>🔍 Analyze Threat</span>
+                                <span class="points">+50 pts</span>
+                            </button>
+                            <button class="action-btn" onclick="takeAction('notify')">
+                                <span>📢 Notify Security Team</span>
+                                <span class="points">+75 pts</span>
+                            </button>
+                            <button class="action-btn" onclick="takeAction('block')">
+                                <span>🛡️ Block Attack Vector</span>
+                                <span class="points">+150 pts</span>
+                            </button>
+                            <button class="action-btn" onclick="takeAction('backup')">
+                                <span>💾 Activate Backup</span>
+                                <span class="points">+200 pts</span>
+                            </button>
+                        </div>
+
+                        <!-- AI Copilot -->
+                        <div class="copilot" id="copilot">
+                            <div class="copilot-header">
+                                🤖 AI Security Copilot
+                            </div>
+                            <div class="copilot-msg" id="copilotMsg">
+                                Welcome to Security Operations Center Simulator. 
+                                <span class="highlight">Click START</span> to begin your first simulation.
+                                Identify and respond to threats before they breach your network!
+                            </div>
+                        </div>
+
+                        <!-- Game Status -->
+                        <div class="game-status">
+                            <div class="status-text ready" id="statusText">◉ READY TO START</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            Security Operations Center Simulator v1.0 | Built for Training | Press START to Begin
+        </footer>
+    </div>
+
+    <div class="sound-toggle on" id="soundToggle" onclick="toggleSound()">
+        🔊 Sound ON
+    </div>
+
+    <script>
+        // Game State
+        let gameState = {
+            running: false,
+            score: 0,
+            threats: 0,
+            streak: 0,
+            level: 1,
+            timeRemaining: 120,
+            timerInterval: null,
+            attackInterval: null,
+            nodes: [],
+            compromisedNodes: [],
+            soundEnabled: true
+        };
+
+        // Network nodes
+        const networkNodes = [
+            { id: 'fw', name: 'Firewall', icon: '🛡️', x: 50, y: 50, type: 'firewall' },
+            { id: 'web', name: 'Web Server', icon: '🌐', x: 30, y: 30, type: 'server' },
+            { id: 'db', name: 'Database', icon: '🗄️', x: 70, y: 30, type: 'server' },
+            { id: 'mail', name: 'Mail Server', icon: '📧', x: 20, y: 60, type: 'server' },
+            { id: 'ws1', name: 'Workstation 1', icon: '💻', x: 40, y: 70, type: 'workstation' },
+            { id: 'ws2', name: 'Workstation 2', icon: '💻', x: 60, y: 70, type: 'workstation' },
+            { id: 'ws3', name: 'Workstation 3', icon: '💻', x: 50, y: 85, type: 'workstation' },
+        ];
+
+        // Sound effects (using Web Audio API)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(type) {
+            if (!gameState.soundEnabled) return;
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            if (type === 'alert') {
+                osc.frequency.value = 800;
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            } else if (type === 'success') {
+                osc.frequency.value = 523.25;
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+            } else if (type === 'danger') {
+                osc.frequency.value = 200;
+                osc.type = 'sawtooth';
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            }
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        }
+
+        function toggleSound() {
+            gameState.soundEnabled = !gameState.soundEnabled;
+            const btn = document.getElementById('soundToggle');
+            btn.classList.toggle('on', gameState.soundEnabled);
+            btn.textContent = gameState.soundEnabled ? '🔊 Sound ON' : '🔇 Sound OFF';
+        }
+
+        // Initialize network map
+        function initNetworkMap() {
+            const map = document.getElementById('networkMap');
+            networkNodes.forEach(node => {
+                const el = document.createElement('div');
+                el.className = `node ${node.type}`;
+                el.id = `node-${node.id}`;
+                el.style.left = `${node.x}%`;
+                el.style.top = `${node.y}%`;
+                el.setAttribute('data-name', node.name);
+                el.innerHTML = node.icon;
+                map.appendChild(el);
+                gameState.nodes.push(node);
+            });
+        }
+
+        // Add alert
+        function addAlert(type, title, desc) {
+            const alertsList = document.getElementById('alertsList');
+            const alert = document.createElement('div');
+            alert.className = `alert ${type}`;
+            alert.innerHTML = `
+                <div class="alert-time">${new Date().toLocaleTimeString()}</div>
+                <div class="alert-title">${title}</div>
+                <div class="alert-desc">${desc}</div>
+            `;
+            alertsList.insertBefore(alert, alertsList.firstChild);
+            
+            // Keep only last 10 alerts
+            while (alertsList.children.length > 10) {
+                alertsList.removeChild(alertsList.lastChild);
+            }
+            
+            gameState.threats++;
+            updateStats();
+            playSound('alert');
+        }
+
+        // Update stats display
+        function updateStats() {
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('mapScore').textContent = gameState.score;
+            document.getElementById('threats').textContent = gameState.threats;
+            document.getElementById('streak').textContent = gameState.streak;
+            document.getElementById('level').textContent = gameState.level;
+            document.getElementById('alertCount').textContent = `${gameState.threats} NEW`;
+        }
+
+        // Update timer
+        function updateTimer() {
+            const mins = Math.floor(gameState.timeRemaining / 60);
+            const secs = gameState.timeRemaining % 60;
+            document.getElementById('timer').textContent = 
+                `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            
+            const timerContainer = document.getElementById('timerContainer');
+            if (gameState.timeRemaining <= 30) {
+                timerContainer.classList.add('timer-critical');
+            }
+            
+            if (gameState.timeRemaining <= 0) {
+                endGame();
+            }
+        }
+
+        // Attack simulation
+        function simulateAttack() {
+            if (!gameState.running) return;
+            
+            // Pick random node to attack
+            const availableNodes = networkNodes.filter(n => 
+                !gameState.compromisedNodes.includes(n.id) && n.type !== 'firewall'
+            );
+            
+            if (availableNodes.length === 0) return;
+            
+            const target = availableNodes[Math.floor(Math.random() * availableNodes.length)];
+            gameState.compromisedNodes.push(target.id);
+            
+            // Update node visual
+            const nodeEl = document.getElementById(`node-${target.id}`);
+            if (nodeEl) {
+                nodeEl.classList.add('compromised');
+            }
+            
+            const attackTypes = [
+                { type: 'critical', title: '⚠️ INTRUSION DETECTED', desc: `${target.name} compromised!` },
+                { type: 'warning', title: '🔴 Malware Signature', desc: `Suspicious activity on ${target.name}` },
+                { type: 'critical', title: '🚨 RANSOMWARE ALERT', desc: `${target.name} encrypting files!` },
+                { type: 'warning', title: '📡 Data Exfiltration', desc: `Outbound connection from ${target.name}` },
+            ];
+            
+            const attack = attackTypes[Math.floor(Math.random() * attackTypes.length)];
+            addAlert(attack.type, attack.title, attack.desc);
+            playSound('danger');
+        }
+
+        // Take action
+        function takeAction(action) {
+            if (!gameState.running) return;
+            
+            const actions = {
+                isolate: { points: 100, msg: 'System isolated. Threat contained! 🛡️' },
+                analyze: { points: 50, msg: 'Threat analyzed. IOCs extracted. 🔍' },
+                notify: { points: 75, msg: 'Security team notified. Team assembling. 📢' },
+                block: { points: 150, msg: 'Attack vector blocked. Firewall updated. 🛡️' },
+                backup: { points: 200, msg: 'Backup systems activated. Data safe! 💾' },
+            };
+            
+            const actionData = actions[action];
+            
+            // Check if there's a compromised node
+            if (gameState.compromisedNodes.length > 0 && Math.random() > 0.3) {
+                // Success!
+                gameState.score += actionData.points;
+                gameState.streak++;
+                gameState.timeRemaining += 10; // Bonus time
+                
+                // Remove one compromised node
+                const fixed = gameState.compromisedNodes.pop();
+                const nodeEl = document.getElementById(`node-${fixed}`);
+                if (nodeEl) {
+                    nodeEl.classList.remove('compromised');
+                }
+                
+                addAlert('info', '✅ Response Successful', actionData.msg);
+                playSound('success');
+                
+                // Level up every 500 points
+                gameState.level = Math.floor(gameState.score / 500) + 1;
+            } else {
+                // Missed - no threat to respond to
+                gameState.streak = 0;
+                gameState.score = Math.max(0, gameState.score - 25);
+                addAlert('warning', '⚠️ No Target', 'No active threat to respond to. Wait for an attack!');
+            }
+            
+            updateStats();
+        }
+
+        // Start game
+        function startGame() {
+            if (gameState.running) return;
+            
+            // Resume audio context (browser requires user interaction)
+            audioCtx.resume();
+            
+            gameState.running = true;
+            gameState.score = 0;
+            gameState.threats = 0;
+            gameState.streak = 0;
+            gameState.level = 1;
+            gameState.timeRemaining = 120;
+            gameState.compromisedNodes = [];
+            
+            // Reset nodes
+            networkNodes.forEach(node => {
+                const nodeEl = document.getElementById(`node-${node.id}`);
+                if (nodeEl) nodeEl.classList.remove('compromised');
+            });
+            
+            // Clear alerts
+            document.getElementById('alertsList').innerHTML = '';
+            
+            // Update UI
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('actionsContainer').style.display = 'block';
+            document.getElementById('timerContainer').classList.remove('timer-critical');
+            document.getElementById('statusText').className = 'status-text active';
+            document.getElementById('statusText').textContent = '◉ SIMULATION ACTIVE';
+            
+            addAlert('info', '🚀 Simulation Started', 'First threats incoming...');
+            
+            // Start timers
+            gameState.timerInterval = setInterval(() => {
+                gameState.timeRemaining--;
+                updateTimer();
+            }, 1000);
+            
+            gameState.attackInterval = setInterval(() => {
+                if (gameState.running && Math.random() > 0.4) {
+                    simulateAttack();
+                }
+            }, 4000);
+            
+            // Immediate first attack
+            setTimeout(simulateAttack, 2000);
+            
+            updateStats();
+        }
+
+        // End game
+        function endGame() {
+            gameState.running = false;
+            
+            clearInterval(gameState.timerInterval);
+            clearInterval(gameState.attackInterval);
+            
+            document.getElementById('startBtn').style.display = 'block';
+            document.getElementById('startBtn').textContent = '▶ PLAY AGAIN';
+            document.getElementById('actionsContainer').style.display = 'none';
+            
+            document.getElementById('statusText').className = 'status-text win';
+            document.getElementById('statusText').textContent = `🏆 FINAL SCORE: ${gameState.score}`;
+            
+            addAlert('info', '⏱️ Time Up!', `Final Score: ${gameState.score} | Level: ${gameState.level} | Threats: ${gameState.threats}`);
+            
+            // Update copilot
+            document.getElementById('copilotMsg').innerHTML = 
+                `Great session! You scored <span class="highlight">${gameState.score} points</span> and reached level ${gameState.level}. 
+                Try again to beat your high score!`;
+        }
+
+        // AI Copilot messages
+        const copilotMsgs = [
+            "Ransomware spreading fast! <span class='highlight'>Isolate</span> the affected system now!",
+            "Suspicious outbound traffic detected. <span class='highlight'>Block</span> the connection!",
+            "Phishing email detected. <span class='highlight'>Notify</span> the team!",
+            "Firewall logs show brute force attempt. <span class='highlight'>Analyze</span> the source!",
+            "Backup servers offline! <span class='highlight'>Activate</span> backup protocols!",
+            "Multiple failed login attempts. <span class='highlight'>Block</span> the IP range!",
+            "Unusual data transfer to external IP. <span class='highlight'>Isolate</span> immediately!",
+        ];
+
+        // Update copilot periodically
+        setInterval(() => {
+            if (gameState.running && gameState.compromisedNodes.length > 0) {
+                const msg = copilotMsgs[Math.floor(Math.random() * copilotMsgs.length)];
+                document.getElementById('copilotMsg').innerHTML = msg;
+            }
+        }, 8000);
+
+        // Initialize
+        initNetworkMap();
+    </script>
+</body>
+</html>
