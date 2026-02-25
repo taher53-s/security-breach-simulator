@@ -1,0 +1,65 @@
+# Security Breach Simulator Configuration
+# Copy to config.yaml and customize
+
+app:
+  name: "Security Breach Simulator"
+  version: "0.3.0"
+  debug: false
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  reload: false
+
+scenarios:
+  # Default difficulty for new runs
+  default_difficulty: "medium"
+  
+  # Enable hints by default
+  hints_enabled: true
+  
+  # Maximum hints per run
+  max_hints: 3
+  
+  # Time limit in seconds (for medium difficulty)
+  time_limit: 900
+
+scoring:
+  # Score multipliers by difficulty
+  multipliers:
+    easy: 1.0
+    medium: 1.0
+    hard: 1.5
+    expert: 2.0
+  
+  # Grade thresholds
+  thresholds:
+    A: 90
+    B: 80
+    C: 70
+    D: 60
+
+logging:
+  # Audit log directory
+  audit_dir: ".audit"
+  
+  # Score directory
+  scores_dir: ".scores"
+  
+  # Runs directory
+  runs_dir: ".runs"
+  
+  # Log level: DEBUG, INFO, WARNING, ERROR
+  level: "INFO"
+
+api:
+  # CORS origins (comma-separated)
+  cors_origins: "*"
+  
+  # Rate limiting
+  rate_limit:
+    enabled: false
+    requests_per_minute: 60
+  
+  # Cache TTL in seconds
+  cache_ttl: 300
