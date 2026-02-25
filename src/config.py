@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 DEFAULT_CONFIG = {
     "app": {
         "name": "Security Breach Simulator",
-        "version": "0.3.0",
+        "version": "1.0.0",
         "debug": False
     },
     "server": {

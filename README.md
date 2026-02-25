@@ -1,7 +1,7 @@
 # Security Breach Simulator
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.3.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.0.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/python-3.11%2B-green" alt="Python">
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="License">
   <img src="https://img.shields.io/badge/status-production--ready-green" alt="Status">
