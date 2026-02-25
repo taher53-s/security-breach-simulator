@@ -1,7 +1,9 @@
 {
-  "scenario_id": "aurora-supply-chain",
-  "title": "Supply Chain Software Tampering",
+  "id": "supply_chain_compromise",
+  "name": "Supply Chain Software Tampering",
   "description": "A compromised vendor build pushes malicious code into an internally trusted deployment pipeline, affecting production services.",
+  "severity": "high",
+  "category": "supply_chain",
   "threat_actor": "Nation-state affiliated actor",
   "entry_point": "Malicious update disguised as a dependency patch for a widely used middleware component",
   "objectives": [
@@ -20,42 +22,48 @@
     "devsecops",
     "production"
   ],
-  "phases": [
+  "stages": [
     {
+      "stage": 1,
       "name": "Recon",
       "description": "Threat actor studies vendor release cadence and introduces a subtle backdoor into a library consumed by the organization.",
-      "metrics": [
+      "indicators": [
         "Altered library checksums",
         "Unusual contributor IPs"
       ],
-      "policy_in_play": [
+      "policies": [
         "policy-code-signing",
         "policy-vendor-assessment"
-      ]
+      ],
+      "duration_minutes": 15
     },
     {
+      "stage": 2,
       "name": "Injection",
       "description": "During automated build, the trojanized artifact is signed with a valid certificate and pushed to the artifact registry.",
-      "metrics": [
+      "indicators": [
         "New signing key usage",
         "Artifact provenance mismatch"
       ],
-      "policy_in_play": [
+      "policies": [
         "policy-ci-cd-controls",
         "policy-operator-separation"
-      ]
+      ],
+      "duration_minutes": 20
     },
     {
+      "stage": 3,
       "name": "Propagation",
       "description": "Production deploys pull the compromised artifact, establishing a covert control channel and hooking into telemetry ingestion.",
-      "metrics": [
+      "indicators": [
         "Suspicious outbound connections",
         "Telemetry ingestion anomalies"
       ],
-      "policy_in_play": [
+      "policies": [
         "policy-network-monitoring",
         "policy-observability"
-      ]
+      ],
+      "duration_minutes": 25
     }
   ],
   "impact": {
@@ -71,5 +79,7 @@
     "policy-vendor-assessment",
     "policy-ci-cd-controls",
     "policy-observability"
-  ]
+  ],
+  "difficulty": "advanced",
+  "estimated_duration_minutes": 60
 }
