@@ -1,13 +1,22 @@
-# Security Breach Simulator - Night Batch v2
+# Security Breach Simulator - Morning Batch v2
 
-Progress update (as of 2026-02-25 08:40 Asia/Calcutta):
+Progress update (as of 2026-02-25 09:00 Asia/Calcutta):
 
-Planned work for this night batch:
+Planned work for this morning batch:
 - Implement new features, add tests, fix critical issues, and update docs.
 - Ensure at least 4 commits with meaningful scope (features/fixes/tests/docs).
 - Maintain a concise changelog in the project plan.
 
-## Night Batch v2 Commits (2026-02-25)
+## Morning Batch v2 Commits (2026-02-25)
+
+| Hash | Summary |
+|------|---------|
+| 137c892 | fix(scenarios): Standardize field names across scenario templates |
+| 10ba75f | fix(scenarios): Fix invalid difficulty values to match expected values |
+| 8c20087 | fix(api): Handle Query objects in direct function calls for testing |
+| 70f7621 | fix(tests): Update test expectations and add missing policy links |
+
+## Night Batch v2 Commits (2026-02-25 earlier)
 
 | Hash | Summary |
 |------|---------|
@@ -23,12 +32,11 @@ Planned work for this night batch:
 - f0df7b9: fix(streamer): support stage-based scenarios and bounded runs
 
 Current status:
-- ✅ Category filtering in generator (severity + category)
-- ✅ Markdown export for documentation
-- ✅ Pure unittest test suite (15 tests, no pytest needed)
-- ✅ API endpoint for markdown export
-- ✅ Changelog updated
-- ✅ All smoke tests passing
+- ✅ Scenario template field standardization (id, name, stages)
+- ✅ Difficulty value validation (beginner/intermediate/advanced/expert)
+- ✅ API Query object handling for direct function calls
+- ✅ Test expectations updated for actual data structures
+- ✅ All 56 tests passing
 
 Next actions:
-- None - all planned work completed.
+- None - all planned work completed for morning batch v2.
