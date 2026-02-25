@@ -8,52 +8,75 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2026-02-25
 
 ### Added
-- **7 Scenario Types**: Ransomware, Phishing, DDoS, Insider Threat, Credential Theft, Supply Chain, Zero-Day
-- **Comprehensive Scoring System**: Detection time (40pts), policy compliance (40pts), efficiency (20pts)
-- **Grade System**: A-F grading based on performance (90+/80+/70+/60+)
-- **Replay System**: Re-run scenarios with same parameters, compare runs
-- **4 Difficulty Presets**: Easy (2x time, hints), Medium (default), Hard (0.5x time, 1.5x score), Expert (0.25x time, 2x score)
-- **Full Audit Logging**: JSONL format for compliance tracking
-- **Stats Dashboard**: Overall performance, trends, leaderboard
 - **Complete CLI**: `list`, `generate`, `score`, `replay`, `stats`, `difficulty`, `serve`
-- **FastAPI REST Server**: Health check, metrics, scenarios, policies, export endpoints
-- **Docker Support**: Dockerfile and docker-compose.yml
-- **GitHub Actions CI/CD**: Automated testing and linting
-- **Configuration Management**: YAML config with env var overrides
-- **Custom Exceptions**: Full error handling throughout
-- **Professional Documentation**: Complete README, PROJECT_PLAN.md
+- **Full Exception Handling**: Custom exceptions throughout
+- **Complete Package Structure**: Proper __init__.py exports
+- **Final Documentation**: Complete README, PROJECT_PLAN.md
 
 ### Changed
-- Upgraded from 0.3.0 to 1.0.0
-- Improved test coverage (44 tests passing)
-- Better import handling for package usage
+- Version bumped to 1.0.0
 
-### Fixed
-- Scenario field standardization (id, name, stages)
-- Difficulty value validation (beginner/intermediate/expert)
-- API Query object handling for direct function calls
-- Test expectations updated for actual data structures
+## [0.9.0] - 2026-02-25
+
+### Added
+- Pre-release fixes and final updates
+
+## [0.8.0] - 2026-02-25
+
+### Added
+- **Docker Support**: Dockerfile and docker-compose.yml
+- **GitHub Actions CI/CD**: Automated testing and linting
+- **Difficulty Tests**: Comprehensive test coverage
+
+## [0.7.0] - 2026-02-25
+
+### Added
+- **Complete CLI**: Full command-line interface
+- **Custom Exceptions**: Full error handling
+- **Package Structure**: Proper imports and exports
+
+## [0.6.0] - 2026-02-25
+
+### Added
+- **Configuration Management**: YAML config with env var overrides
+- **Config Tests**: Configuration testing
+
+## [0.5.0] - 2026-02-25
+
+### Added
+- **4 Difficulty Presets**: Easy, Medium, Hard, Expert
+- **Timer System**: Respects difficulty settings
+- **Audit Logging**: Full JSONL format for compliance
+
+## [0.4.0] - 2026-02-25
+
+### Added
+- **Scoring System**: Detection (40pts), compliance (40pts), efficiency (20pts)
+- **Grade System**: A-F grading
+- **Replay System**: Re-run scenarios, compare runs
 
 ## [0.3.0] - 2026-02-24
 
 ### Added
-- Category filtering
-- Markdown export
-- Initial test suite
+- **Category Filtering**: Filter scenarios by type
+- **Markdown Export**: Export scenarios for documentation
+- **Pure unittest Tests**: No pytest dependency
 
 ### Fixed
-- Policy catalog loading
-- Streamer stage support
+- Scenario field standardization
 
 ## [0.2.0] - 2026-02-23
 
 ### Added
-- Basic scenario generation
-- Seeded random generation
+- **API v0.2.0**: New endpoints
+- **Pagination Support**: Scenarios and policies
+- **Enhanced Validation**: Scenario tests
 
 ## [0.1.0] - 2026-02-21
 
 ### Added
 - Initial release
-- Basic scenario templates
-- Simple CLI
+- 7 Scenario types
+- Basic CLI
+- REST API
+- Detection streamer
