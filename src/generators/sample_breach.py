@@ -240,7 +240,7 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Security Breach Simulator")
-    parser.add_argument("command", choices=["list", "generate", "summary", "export", "score", "replay"])
+    parser.add_argument("command", choices=["list", "generate", "summary", "export", "score", "replay", "webcast", "visualize"])
     parser.add_argument("--scenario", help="Scenario ID")
     parser.add_argument("--severity", help="Severity filter for random generation")
     parser.add_argument("--category", help="Category filter for listing scenarios")
@@ -307,6 +307,30 @@ def main():
             print("Recent replays:")
             for r in engine.list_runs(5):
                 print(f"  {r['run_id']}: {r['scenario_id']} (seed={r['seed']})")
+
+    elif args.command == "webcast":
+        if not args.scenario:
+            print("Error: --scenario required for webcast")
+            return
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from webcast import ScenarioWebcaster
+        webcaster = ScenarioWebcaster(args.scenario, seed=args.seed)
+        print(webcaster.get_sse_stream())
+
+    elif args.command == "visualize":
+        if not args.scenario:
+            print("Error: --scenario required for visualize")
+            return
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from timeline import visualize
+        style = "full"
+        if args.format == "markdown":
+            style = "summary"
+        print(visualize(args.scenario, style=style, seed=args.seed))
 
     elif args.command == "summary":
         if not args.scenario:
