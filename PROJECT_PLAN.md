@@ -1,42 +1,47 @@
-# Security Breach Simulator - Morning Batch v2
+# Security Breach Simulator - New Features Batch
 
-Progress update (as of 2026-02-25 09:00 Asia/Calcutta):
+Progress update (as of 2026-02-25 09:45 Asia/Calcutta):
 
-Planned work for this morning batch:
-- Implement new features, add tests, fix critical issues, and update docs.
-- Ensure at least 4 commits with meaningful scope (features/fixes/tests/docs).
-- Maintain a concise changelog in the project plan.
-
-## Morning Batch v2 Commits (2026-02-25)
+## New Features Commits (2026-02-25)
 
 | Hash | Summary |
 |------|---------|
-| 137c892 | fix(scenarios): Standardize field names across scenario templates |
-| 10ba75f | fix(scenarios): Fix invalid difficulty values to match expected values |
-| 8c20087 | fix(api): Handle Query objects in direct function calls for testing |
-| 70f7621 | fix(tests): Update test expectations and add missing policy links |
+| 84bca93 | feat: Add scoring and replay system |
+| 6d7f285 | test: Add tests for scoring and replay systems |
 
-## Night Batch v2 Commits (2026-02-25 earlier)
+### Features Added:
+1. **Scoring System** (src/scoring.py)
+   - ScoringEngine tracks player performance
+   - Detection time, steps taken, policy compliance scoring
+   - Grade calculation (A-F) based on total score
+   - Save/load scores to .scores directory
 
+2. **Replay System** (src/replay.py)
+   - ReplayEngine for re-running scenarios with same seed
+   - Compare runs for performance analysis
+   - Save replays to .runs directory
+
+3. **CLI Commands**
+   - `breach score --last` - Show last run score
+   - `breach score --run-id <id>` - Show specific run
+   - `breach replay` - List recent replays
+   - `breach replay --run-id <id>` - Show replay details
+
+## Previous Batches
+
+### Morning/Night Batch v2 (earlier):
 | Hash | Summary |
 |------|---------|
 | df8fc9d | feat: Add category filtering and markdown export to generator |
-| 57474f2 | test: Add pure unittest test suite (no pytest dependency) |
-| 1515d08 | docs: Update changelog for night batch v2 |
-| 3cdc6ea | feat(api): Add markdown export endpoint for scenarios |
-
-## Previous Commits (chronological order):
-- d37fe24: feat: Implement feature A (Night Batch v2)
-- f38a337: test/docs: add unittest smoke suite and morning batch progress
-- 6f2b3c0: fix(generator): support list or object policy catalog formats
-- f0df7b9: fix(streamer): support stage-based scenarios and bounded runs
+| 57474f2 | test: Add pure unittest test suite |
+| 3cdc6ea | feat(api): Add markdown export endpoint |
 
 Current status:
-- ✅ Scenario template field standardization (id, name, stages)
-- ✅ Difficulty value validation (beginner/intermediate/advanced/expert)
-- ✅ API Query object handling for direct function calls
-- ✅ Test expectations updated for actual data structures
-- ✅ All 56 tests passing
+- ✅ Scoring system implemented
+- ✅ Replay system implemented  
+- ✅ CLI commands added
+- ✅ Tests passing (25 total)
+- All commits pushed to origin/main
 
 Next actions:
-- None - all planned work completed for morning batch v2.
+- None - batch complete.
