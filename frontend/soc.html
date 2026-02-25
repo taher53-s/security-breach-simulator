@@ -3,970 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Operations Center | Live Simulator</title>
+    <title>Security Operations Center | Learn by Doing</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Orbitron:wght@400;700;900&display=swap');
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --bg-dark: #050508;
-            --bg-panel: #0a0a12;
-            --bg-card: #0d0d18;
-            --accent: #00ff88;
-            --accent-glow: #00ff8844;
-            --danger: #ff2d55;
-            --danger-glow: #ff2d5544;
-            --warning: #ffaa00;
-            --warning-glow: #ffaa0044;
-            --info: #00d4ff;
-            --info-glow: #00d4ff44;
-            --text: #e8e8e8;
-            --text-dim: #6a6a7a;
-            --border: #1a1a2a;
-        }
-
-        body {
-            font-family: 'JetBrains Mono', monospace;
-            background: var(--bg-dark);
-            color: var(--text);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Animated grid background */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                linear-gradient(90deg, transparent 49%, #00ff8808 50%, transparent 51%),
-                linear-gradient(0deg, transparent 49%, #00ff8808 50%, transparent 51%);
-            background-size: 60px 60px;
-            animation: gridMove 20s linear infinite;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        @keyframes gridMove {
-            0% { transform: translateY(0); }
-            100% { transform: translateY(60px); }
-        }
-
-        .container {
-            position: relative;
-            z-index: 1;
-            max-width: 1800px;
-            margin: 0 auto;
-            padding: 1rem;
-        }
-
-        /* Header */
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 2rem;
-            background: linear-gradient(180deg, var(--bg-panel) 0%, transparent 100%);
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 1rem;
-        }
-
-        .logo {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.4rem;
-            font-weight: 700;
-            letter-spacing: 3px;
-        }
-
-        .logo span { color: var(--accent); text-shadow: 0 0 20px var(--accent-glow); }
-        .logo .live { color: var(--danger); animation: pulse 1.5s infinite; }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .header-stats {
-            display: flex;
-            gap: 2rem;
-            align-items: center;
-        }
-
-        .h-stat {
-            text-align: center;
-        }
-
-        .h-stat-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            font-family: 'Orbitron', sans-serif;
-        }
-
-        .h-stat-value.accent { color: var(--accent); }
-        .h-stat-value.danger { color: var(--danger); }
-        .h-stat-value.warning { color: var(--warning); }
-
-        .h-stat-label {
-            font-size: 0.65rem;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* Main Grid */
-        .main-grid {
-            display: grid;
-            grid-template-columns: 1fr 350px;
-            gap: 1rem;
-        }
-
-        @media (max-width: 1200px) {
-            .main-grid { grid-template-columns: 1fr; }
-        }
-
-        /* Panels */
-        .panel {
-            background: var(--bg-panel);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        .panel-header {
-            padding: 0.8rem 1rem;
-            background: var(--bg-card);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .panel-title {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--text-dim);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .panel-title::before {
-            content: '';
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--accent);
-            box-shadow: 0 0 10px var(--accent);
-        }
-
-        .panel-content {
-            padding: 1rem;
-        }
-
-        /* Network Map */
-        .network-map {
-            position: relative;
-            height: 450px;
-            background: 
-                radial-gradient(ellipse at center, #00ff8805 0%, transparent 70%),
-                var(--bg-dark);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        .node {
-            position: absolute;
-            width: 50px;
-            height: 50px;
-            background: var(--bg-card);
-            border: 2px solid var(--border);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            z-index: 10;
-        }
-
-        .node:hover {
-            transform: scale(1.1);
-            border-color: var(--accent);
-        }
-
-        .node::after {
-            content: attr(data-name);
-            position: absolute;
-            bottom: -25px;
-            font-size: 0.6rem;
-            color: var(--text-dim);
-            white-space: nowrap;
-        }
-
-        .node.server { border-color: var(--info); }
-        .node.workstation { border-color: var(--text-dim); }
-        .node.firewall { border-color: var(--warning); }
-        .node.compromised { 
-            border-color: var(--danger); 
-            animation: compromisedPulse 0.5s infinite;
-            background: var(--danger-glow);
-        }
-
-        @keyframes compromisedPulse {
-            0%, 100% { box-shadow: 0 0 20px var(--danger-glow); }
-            50% { box-shadow: 0 0 40px var(--danger); }
-        }
-
-        /* Attack line */
-        .attack-line {
-            position: absolute;
-            height: 2px;
-            background: var(--danger);
-            transform-origin: left center;
-            animation: attackFlow 1s linear infinite;
-            z-index: 5;
-            box-shadow: 0 0 10px var(--danger);
-        }
-
-        @keyframes attackFlow {
-            0% { opacity: 1; }
-            100% { opacity: 0.3; }
-        }
-
-        /* Timer */
-        .timer-container {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: var(--bg-card);
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            text-align: center;
-            z-index: 20;
-        }
-
-        .timer-value {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--danger);
-            text-shadow: 0 0 20px var(--danger-glow);
-        }
-
-        .timer-label {
-            font-size: 0.65rem;
-            color: var(--text-dim);
-            text-transform: uppercase;
-        }
-
-        .timer-critical .timer-value {
-            animation: timerBlink 0.5s infinite;
-        }
-
-        @keyframes timerBlink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        /* Score Display */
-        .score-display {
-            position: absolute;
-            top: 1rem;
-            left: 1rem;
-            background: var(--bg-card);
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
-            border: 1px solid var(--accent);
-            z-index: 20;
-        }
-
-        .score-value {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--accent);
-        }
-
-        .score-label {
-            font-size: 0.65rem;
-            color: var(--text-dim);
-            text-transform: uppercase;
-        }
-
-        /* Alerts Panel */
-        .alerts-panel {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .alerts-list {
-            flex: 1;
-            overflow-y: auto;
-            max-height: 400px;
-        }
-
-        .alert {
-            padding: 0.8rem;
-            margin-bottom: 0.5rem;
-            background: var(--bg-card);
-            border-radius: 8px;
-            border-left: 3px solid var(--text-dim);
-            animation: alertSlide 0.3s ease;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .alert:hover {
-            background: var(--bg-hover);
-            transform: translateX(5px);
-        }
-
-        @keyframes alertSlide {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        .alert.critical { border-left-color: var(--danger); }
-        .alert.warning { border-left-color: var(--warning); }
-        .alert.info { border-left-color: var(--info); }
-
-        .alert-time {
-            font-size: 0.65rem;
-            color: var(--text-dim);
-        }
-
-        .alert-title {
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin: 0.3rem 0;
-        }
-
-        .alert-desc {
-            font-size: 0.75rem;
-            color: var(--text-dim);
-        }
-
-        /* Actions Panel */
-        .actions-panel {
-            margin-top: 1rem;
-        }
-
-        .action-btn {
-            width: 100%;
-            padding: 1rem;
-            margin-bottom: 0.5rem;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text);
-            font-family: inherit;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: left;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .action-btn:hover {
-            background: var(--bg-hover);
-            border-color: var(--accent);
-            transform: translateX(5px);
-        }
-
-        .action-btn .points {
-            color: var(--accent);
-            font-weight: 600;
-        }
-
-        .action-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* AI Copilot */
-        .copilot {
-            margin-top: 1rem;
-            padding: 1rem;
-            background: linear-gradient(135deg, var(--bg-card) 0%, #0a1525 100%);
-            border-radius: 8px;
-            border: 1px solid var(--info);
-        }
-
-        .copilot-header {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.8rem;
-            font-size: 0.75rem;
-            color: var(--info);
-            text-transform: uppercase;
-        }
-
-        .copilot-msg {
-            font-size: 0.8rem;
-            line-height: 1.5;
-            color: var(--text-dim);
-        }
-
-        .copilot-msg .highlight {
-            color: var(--accent);
-        }
-
-        /* Game Status */
-        .game-status {
-            padding: 1rem;
-            text-align: center;
-            margin-top: 1rem;
-        }
-
-        .status-text {
-            font-size: 1rem;
-            font-weight: 600;
-        }
-
-        .status-text.ready { color: var(--accent); }
-        .status-text.active { color: var(--warning); }
-        .status-text.danger { color: var(--danger); }
-        .status-text.win { color: var(--accent); text-shadow: 0 0 20px var(--accent); }
-
-        /* Start Button */
-        .start-btn {
-            width: 100%;
-            padding: 1.5rem;
-            background: linear-gradient(135deg, var(--accent) 0%, #00cc6a 100%);
-            border: none;
-            border-radius: 12px;
-            color: var(--bg-dark);
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.2rem;
-            font-weight: 700;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            transition: all 0.3s;
-            box-shadow: 0 0 30px var(--accent-glow);
-        }
-
-        .start-btn:hover {
-            transform: scale(1.02);
-            box-shadow: 0 0 50px var(--accent-glow);
-        }
-
-        /* Streak Bar */
-        .streak-bar {
-            margin-top: 1rem;
-        }
-
-        .streak-label {
-            font-size: 0.7rem;
-            color: var(--text-dim);
-            margin-bottom: 0.3rem;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .streak-track {
-            height: 8px;
-            background: var(--bg-card);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .streak-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--accent), var(--warning));
-            border-radius: 4px;
-            transition: width 0.5s ease;
-        }
-
-        /* Leaderboard Mini */
-        .leaderboard {
-            margin-top: 1rem;
-        }
-
-        .lb-entry {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.5rem;
-            border-bottom: 1px solid var(--border);
-            font-size: 0.8rem;
-        }
-
-        .lb-entry:first-child {
-            color: var(--accent);
-            font-weight: 600;
-        }
-
-        /* Footer */
-        footer {
-            text-align: center;
-            padding: 2rem;
-            color: var(--text-dim);
-            font-size: 0.7rem;
-            margin-top: 2rem;
-        }
-
-        /* Sound notification */
-        .sound-toggle {
-            position: fixed;
-            bottom: 1rem;
-            right: 1rem;
-            padding: 0.5rem 1rem;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            color: var(--text-dim);
-            cursor: pointer;
-            font-size: 0.75rem;
-            z-index: 100;
-        }
-
-        .sound-toggle.on { border-color: var(--accent); color: var(--accent); }
+            --bg: #050508; --panel: #0a0a12; --card: #0d0d18;
+            --accent: #00ff88; --accent-g: #00ff8844;
+            --danger: #ff2d55; --danger-g: #ff2d5544;
+            --warning: #ffaa00; --info: #00d4ff;
+            --text: #e8e8e8; --dim: #6a6a7a; --border: #1a1a2a;
+        }
+        body { font-family: 'JetBrains Mono', monospace; background: var(--bg); color: var(--text); min-height: 100vh; }
+        body::before { content: ''; position: fixed; inset: 0; background: linear-gradient(90deg, transparent 49%, #00ff8808 50%, transparent 51%), linear-gradient(0deg, transparent 49%, #00ff8808 50%, transparent 51%); background-size: 60px 60px; animation: g 20s linear infinite; pointer-events: none; z-index: 0; }
+        @keyframes g { to { transform: translateY(60px); } }
+        .c { max-width: 1600px; margin: 0 auto; padding: 1rem; position: relative; z-index: 1; }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: linear-gradient(180deg, var(--panel) 0%, transparent 100%); border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
+        .logo { font-family: 'Orbitron', sans-serif; font-size: 1.3rem; font-weight: 700; letter-spacing: 2px; }
+        .logo span { color: var(--accent); text-shadow: 0 0 20px var(--accent-g); }
+        .logo .l { color: var(--danger); animation: p 1.5s infinite; }
+        @keyframes p { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        .hs { display: flex; gap: 1.5rem; align-items: center; }
+        .hs > div { text-align: center; }
+        .v { font-size: 1.4rem; font-weight: 700; font-family: 'Orbitron', sans-serif; }
+        .v.ac { color: var(--accent); } .v.dg { color: var(--danger); } .v.wr { color: var(--warning); }
+        .lbl { font-size: 0.6rem; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
+        .g { display: grid; grid-template-columns: 1fr 380px; gap: 1rem; }
+        @media (max-width:1100px){ .g{grid-template-columns:1fr} }
+        .p { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .ph { padding: 0.8rem 1rem; background: var(--card); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; color: var(--dim); }
+        .ph::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+        .pc { padding: 1rem; }
+        .nm { position: relative; height: 400px; background: radial-gradient(ellipse at center, #00ff8805 0%, transparent 70%), var(--bg); border-radius: 8px; }
+        .node { position: absolute; width: 50px; height: 50px; background: var(--card); border: 2px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; cursor: pointer; transition: all 0.3s; z-index: 10; }
+        .node:hover { transform: scale(1.1); border-color: var(--accent); }
+        .node::after { content: attr(data-name); position: absolute; bottom: -20px; font-size: 0.5rem; color: var(--dim); white-space: nowrap; }
+        .node.sv { border-color: var(--info); } .node.ws { border-color: var(--dim); } .node.fw { border-color: var(--warning); }
+        .node.cp { border-color: var(--danger); animation: cp 0.5s infinite; background: var(--danger-g); }
+        @keyframes cp { 0%,100%{box-shadow:0 0 20px var(--danger-g)} 50%{box-shadow:0 0 40px var(--danger)} }
+        .sc { position: absolute; top: 1rem; left: 1rem; background: var(--card); padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid var(--accent); z-index: 20; }
+        .sv { font-family: 'Orbitron', sans-serif; font-size: 1.8rem; font-weight: 700; color: var(--accent); }
+        .tm { position: absolute; top: 1rem; right: 1rem; background: var(--card); padding: 0.8rem 1.2rem; border-radius: 8px; border: 1px solid var(--border); text-align: center; z-index: 20; }
+        .tv { font-family: 'Orbitron', sans-serif; font-size: 1.8rem; font-weight: 700; color: var(--danger); text-shadow: 0 0 20px var(--danger-g); }
+        .tc.cri .tv { animation: tb 0.5s infinite; }
+        @keyframes tb { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        .ob { position: absolute; bottom: 1rem; left: 1rem; right: 1rem; background: var(--card); padding: 0.8rem; border-radius: 8px; border: 1px solid var(--warning); z-index: 20; font-size: 0.7rem; }
+        .ob-t { color: var(--warning); font-weight: 600; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.5rem; }
+        .ob-i { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .ob-d { padding: 0.2rem 0.5rem; background: var(--accent-g); color: var(--accent); border-radius: 4px; }
+        .rp { display: flex; flex-direction: column; gap: 1rem; }
+        .al { flex: 1; min-height: 250px; }
+        .al-l { flex: 1; overflow-y: auto; max-height: 200px; }
+        .alert { padding: 0.8rem; margin-bottom: 0.5rem; background: var(--card); border-radius: 8px; border-left: 3px solid var(--dim); animation: as 0.3s ease; cursor: pointer; transition: all 0.2s; }
+        .alert:hover { background: #12121f; transform: translateX(5px); }
+        @keyframes as { from{opacity:0;transform:translateX(-20px)} to{opacity:1;transform:translateX(0)} }
+        .alert.cri { border-left-color: var(--danger); } .alert.war { border-left-color: var(--warning); } .alert.inf { border-left-color: var(--info); }
+        .at { font-size: 0.6rem; color: var(--dim); } .at-t { font-size: 0.85rem; font-weight: 600; margin: 0.3rem 0; } .ad { font-size: 0.75rem; color: var(--dim); }
+        .lr { background: linear-gradient(135deg, #0d1520 0%, var(--panel) 100%); border: 1px solid var(--info); }
+        .lc { padding: 1rem; font-size: 0.8rem; line-height: 1.6; color: var(--dim); max-height: 180px; overflow-y: auto; }
+        .lc h4 { color: var(--info); margin-bottom: 0.5rem; font-size: 0.85rem; }
+        .lc .hl { color: var(--accent); }
+        .lc .cd { background: var(--bg); padding: 0.3rem 0.5rem; border-radius: 4px; font-size: 0.7rem; display: block; margin: 0.3rem 0; }
+        .ac { background: var(--panel); }
+        .sb { width: 100%; padding: 1.5rem; background: linear-gradient(135deg, var(--accent) 0%, #00cc6a 100%); border: none; border-radius: 12px; color: var(--bg); font-family: 'Orbitron', sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; transition: all 0.3s; box-shadow: 0 0 30px var(--accent-g); }
+        .sb:hover { transform: scale(1.02); box-shadow: 0 0 50px var(--accent-g); }
+        .ac-c { display: none; }
+        .ab { width: 100%; padding: 0.9rem; margin-bottom: 0.4rem; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: inherit; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; text-align: left; display: flex; justify-content: space-between; align-items: center; }
+        .ab:hover:not(:disabled) { background: #12121f; border-color: var(--accent); transform: translateX(5px); }
+        .ab:disabled { opacity: 0.5; cursor: not-allowed; }
+        .pt { color: var(--accent); font-weight: 600; }
+        .hk { background: var(--bg); padding: 0.2rem 0.4rem; border-radius: 4px; font-size: 0.65rem; color: var(--dim); }
+        .fb { padding: 0.9rem; margin-top: 0.5rem; border-radius: 8px; font-size: 0.8rem; display: none; }
+        .fb.show { display: block; animation: f 0.3s ease; }
+        .fb.cr { background: var(--accent-g); border: 1px solid var(--accent); color: var(--accent); }
+        .fb.wr { background: var(--danger-g); border: 1px solid var(--danger); color: var(--danger); }
+        @keyframes f { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+        .lp { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+        .li { display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-size: 0.7rem; }
+        .li .cu { color: var(--warning); font-weight: 600; }
+        .pb { height: 6px; background: var(--card); border-radius: 3px; overflow: hidden; }
+        .pf { height: 100%; background: linear-gradient(90deg, var(--accent), var(--warning)); transition: width 0.5s ease; }
+        .ti { display: grid; grid-template-columns: repeat(2,1fr); gap: 0.4rem; margin-top: 1rem; }
+        .tc { padding: 0.4rem; background: var(--bg); border-radius: 6px; font-size: 0.6rem; text-align: center; opacity: 0.4; transition: all 0.3s; }
+        .tc.un { opacity: 1; border: 1px solid var(--accent); }
+        .tc .ic { font-size: 0.9rem; }
+        ft { text-align: center; padding: 2rem; color: var(--dim); font-size: 0.7rem; margin-top: 2rem; }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="c">
         <header>
-            <div class="logo">
-                <span class="live">●</span> SECURITY<span>OPS</span>CENTER
-            </div>
-            <div class="header-stats">
-                <div class="h-stat">
-                    <div class="h-stat-value accent" id="score">0</div>
-                    <div class="h-stat-label">Score</div>
-                </div>
-                <div class="h-stat">
-                    <div class="h-stat-value danger" id="threats">0</div>
-                    <div class="h-stat-label">Threats</div>
-                </div>
-                <div class="h-stat">
-                    <div class="h-stat-value warning" id="streak">0</div>
-                    <div class="h-stat-label">Streak</div>
-                </div>
-                <div class="h-stat">
-                    <div class="h-stat-value" id="level">1</div>
-                    <div class="h-stat-label">Level</div>
-                </div>
+            <div class="logo"><span class="l">●</span> SECURITY<span>OPS</span>CENTER <span style="font-size:0.7rem;color:var(--dim);margin-left:1rem">LEARN BY DOING</span></div>
+            <div class="hs">
+                <div><div class="v ac" id="score">0</div><div class="lbl">Score</div></div>
+                <div><div class="v dg" id="contain">0</div><div class="lbl">Contained</div></div>
+                <div><div class="v wr" id="streak">0</div><div class="lbl">Streak</div></div>
+                <div><div class="v" id="level">1</div><div class="lbl">Level</div></div>
             </div>
         </header>
-
-        <div class="main-grid">
-            <!-- Network Map -->
-            <div class="panel">
-                <div class="panel-header">
-                    <span class="panel-title">Network Threat Map</span>
-                    <span id="connectionStatus" style="color: var(--accent); font-size: 0.7rem;">● CONNECTED</span>
-                </div>
-                <div class="panel-content">
-                    <div class="network-map" id="networkMap">
-                        <div class="score-display">
-                            <div class="score-value" id="mapScore">0</div>
-                            <div class="score-label">Score</div>
-                        </div>
-                        <div class="timer-container" id="timerContainer">
-                            <div class="timer-value" id="timer">00:00</div>
-                            <div class="timer-label">Time Remaining</div>
-                        </div>
-                        
-                        <!-- Nodes will be added by JS -->
+        <div class="g">
+            <div class="p">
+                <div class="ph">Network Threat Map</div>
+                <div class="pc">
+                    <div class="nm" id="nm">
+                        <div class="sc"><div class="v ac" id="ms">0</div><div class="lbl">Score</div></div>
+                        <div class="tm" id="tm"><div class="tv" id="tv">02:00</div><div class="lbl">Time Left</div></div>
+                        <div class="ob" id="ob"><div class="ob-t">🎯 CURRENT OBJECTIVE</div><div class="ob-i" id="obj">Learn about Ransomware attacks</div></div>
                     </div>
                 </div>
             </div>
-
-            <!-- Right Sidebar -->
-            <div>
-                <!-- Alerts -->
-                <div class="panel alerts-panel">
-                    <div class="panel-header">
-                        <span class="panel-title">Live Alerts</span>
-                        <span id="alertCount" style="color: var(--danger); font-size: 0.7rem;">0 NEW</span>
-                    </div>
-                    <div class="panel-content">
-                        <div class="alerts-list" id="alertsList">
-                            <div class="alert info">
-                                <div class="alert-time">SYSTEM</div>
-                                <div class="alert-title">SOC Simulator Ready</div>
-                                <div class="alert-desc">Click START to begin simulation</div>
-                            </div>
-                        </div>
-                    </div>
+            <div class="rp">
+                <div class="p al">
+                    <div class="ph">Live Alerts</div>
+                    <div class="pc"><div class="al-l" id="al">
+                        <div class="alert inf"><div class="at">SYSTEM</div><div class="at-t">SOC Simulator Ready</div><div class="ad">Click START → Complete missions → Learn security!</div></div>
+                    </div></div>
                 </div>
-
-                <!-- Actions -->
-                <div class="panel actions-panel" style="margin-top: 1rem;">
-                    <div class="panel-header">
-                        <span class="panel-title">Response Actions</span>
+                <div class="p lr"><div class="ph">📚 Threat Intel</div><div class="lc" id="lc">
+                    <h4>Welcome to Security Operations Center!</h4>
+                    <p>This simulator teaches you real cybersecurity:</p>
+                    <p>• <span class="hl">Complete Missions</span> - Each attack is a learning opportunity</p>
+                    <p>• <span class="hl">Learn in Action</span> - Get detailed explanations for every threat</p>
+                    <p>• <span class="hl">Build Expertise</span> - Unlock threat cards as you progress</p>
+                    <p style="margin-top:1rem;text-align:center"><span class="hl">Click START to begin!</span></p>
+                </div></div>
+                <div class="p ac"><div class="ph">Response Actions</div><div class="pc">
+                    <button class="sb" id="sb" onclick="startGame()">▶ START MISSION</button>
+                    <div class="ac-c" id="ac">
+                        <button class="ab" onclick="take('isolate')" id="b1"><span>🔒 Isolate System</span><span><span class="pt">+100</span> <span class="hk">[1]</span></span></button>
+                        <button class="ab" onclick="take('analyze')" id="b2"><span>🔍 Analyze Threat</span><span><span class="pt">+50</span> <span class="hk">[2]</span></span></button>
+                        <button class="ab" onclick="take('notify')" id="b3"><span>📢 Notify Team</span><span><span class="pt">+75</span> <span class="hk">[3]</span></span></button>
+                        <button class="ab" onclick="take('block')" id="b4"><span>🛡️ Block Attack</span><span><span class="pt">+150</span> <span class="hk">[4]</span></span></button>
+                        <button class="ab" onclick="take('backup')" id="b5"><span>💾 Activate Backup</span><span><span class="pt">+200</span> <span class="hk">[5]</span></span></button>
                     </div>
-                    <div class="panel-content">
-                        <button class="start-btn" id="startBtn" onclick="startGame()">
-                            ▶ START SIMULATION
-                        </button>
-
-                        <div id="actionsContainer" style="display: none;">
-                            <button class="action-btn" onclick="takeAction('isolate')">
-                                <span>🔒 Isolate Affected System</span>
-                                <span class="points">+100 pts</span>
-                            </button>
-                            <button class="action-btn" onclick="takeAction('analyze')">
-                                <span>🔍 Analyze Threat</span>
-                                <span class="points">+50 pts</span>
-                            </button>
-                            <button class="action-btn" onclick="takeAction('notify')">
-                                <span>📢 Notify Security Team</span>
-                                <span class="points">+75 pts</span>
-                            </button>
-                            <button class="action-btn" onclick="takeAction('block')">
-                                <span>🛡️ Block Attack Vector</span>
-                                <span class="points">+150 pts</span>
-                            </button>
-                            <button class="action-btn" onclick="takeAction('backup')">
-                                <span>💾 Activate Backup</span>
-                                <span class="points">+200 pts</span>
-                            </button>
-                        </div>
-
-                        <!-- AI Copilot -->
-                        <div class="copilot" id="copilot">
-                            <div class="copilot-header">
-                                🤖 AI Security Copilot
-                            </div>
-                            <div class="copilot-msg" id="copilotMsg">
-                                Welcome to Security Operations Center Simulator. 
-                                <span class="highlight">Click START</span> to begin your first simulation.
-                                Identify and respond to threats before they breach your network!
-                            </div>
-                        </div>
-
-                        <!-- Game Status -->
-                        <div class="game-status">
-                            <div class="status-text ready" id="statusText">◉ READY TO START</div>
-                        </div>
+                    <div class="fb" id="fb"></div>
+                    <div class="lp"><div class="li"><span class="cu" id="ln">Level 1: Novice</span><span id="xp">0/500 XP</span></div><div class="pb"><div class="pf" id="pf" style="width:0%"></div></div></div>
+                    <div class="ti" id="ti">
+                        <div class="tc" id="tr"><div class="ic">🪓</div><div>Ransomware</div></div>
+                        <div class="tc" id="tp"><div class="ic">🎣</div><div>Phishing</div></div>
+                        <div class="tc" id="td"><div class="ic">🌊</div><div>DDoS</div></div>
+                        <div class="tc" id="tm"><div class="ic">🦠</div><div>Malware</div></div>
                     </div>
-                </div>
+                </div></div>
             </div>
         </div>
-
-        <footer>
-            Security Operations Center Simulator v1.0 | Built for Training | Press START to Begin
-        </footer>
+        <ft>Security Operations Center v2.0 | Learn Cybersecurity Through Practice</ft>
     </div>
-
-    <div class="sound-toggle on" id="soundToggle" onclick="toggleSound()">
-        🔊 Sound ON
-    </div>
-
-    <script>
-        // Game State
-        let gameState = {
-            running: false,
-            score: 0,
-            threats: 0,
-            streak: 0,
-            level: 1,
-            timeRemaining: 120,
-            timerInterval: null,
-            attackInterval: null,
-            nodes: [],
-            compromisedNodes: [],
-            soundEnabled: true
-        };
-
-        // Network nodes
-        const networkNodes = [
-            { id: 'fw', name: 'Firewall', icon: '🛡️', x: 50, y: 50, type: 'firewall' },
-            { id: 'web', name: 'Web Server', icon: '🌐', x: 30, y: 30, type: 'server' },
-            { id: 'db', name: 'Database', icon: '🗄️', x: 70, y: 30, type: 'server' },
-            { id: 'mail', name: 'Mail Server', icon: '📧', x: 20, y: 60, type: 'server' },
-            { id: 'ws1', name: 'Workstation 1', icon: '💻', x: 40, y: 70, type: 'workstation' },
-            { id: 'ws2', name: 'Workstation 2', icon: '💻', x: 60, y: 70, type: 'workstation' },
-            { id: 'ws3', name: 'Workstation 3', icon: '💻', x: 50, y: 85, type: 'workstation' },
-        ];
-
-        // Sound effects (using Web Audio API)
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        function playSound(type) {
-            if (!gameState.soundEnabled) return;
-            
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            
-            if (type === 'alert') {
-                osc.frequency.value = 800;
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-            } else if (type === 'success') {
-                osc.frequency.value = 523.25;
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-            } else if (type === 'danger') {
-                osc.frequency.value = 200;
-                osc.type = 'sawtooth';
-                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-            }
-            
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.5);
-        }
-
-        function toggleSound() {
-            gameState.soundEnabled = !gameState.soundEnabled;
-            const btn = document.getElementById('soundToggle');
-            btn.classList.toggle('on', gameState.soundEnabled);
-            btn.textContent = gameState.soundEnabled ? '🔊 Sound ON' : '🔇 Sound OFF';
-        }
-
-        // Initialize network map
-        function initNetworkMap() {
-            const map = document.getElementById('networkMap');
-            networkNodes.forEach(node => {
-                const el = document.createElement('div');
-                el.className = `node ${node.type}`;
-                el.id = `node-${node.id}`;
-                el.style.left = `${node.x}%`;
-                el.style.top = `${node.y}%`;
-                el.setAttribute('data-name', node.name);
-                el.innerHTML = node.icon;
-                map.appendChild(el);
-                gameState.nodes.push(node);
-            });
-        }
-
-        // Add alert
-        function addAlert(type, title, desc) {
-            const alertsList = document.getElementById('alertsList');
-            const alert = document.createElement('div');
-            alert.className = `alert ${type}`;
-            alert.innerHTML = `
-                <div class="alert-time">${new Date().toLocaleTimeString()}</div>
-                <div class="alert-title">${title}</div>
-                <div class="alert-desc">${desc}</div>
-            `;
-            alertsList.insertBefore(alert, alertsList.firstChild);
-            
-            // Keep only last 10 alerts
-            while (alertsList.children.length > 10) {
-                alertsList.removeChild(alertsList.lastChild);
-            }
-            
-            gameState.threats++;
-            updateStats();
-            playSound('alert');
-        }
-
-        // Update stats display
-        function updateStats() {
-            document.getElementById('score').textContent = gameState.score;
-            document.getElementById('mapScore').textContent = gameState.score;
-            document.getElementById('threats').textContent = gameState.threats;
-            document.getElementById('streak').textContent = gameState.streak;
-            document.getElementById('level').textContent = gameState.level;
-            document.getElementById('alertCount').textContent = `${gameState.threats} NEW`;
-        }
-
-        // Update timer
-        function updateTimer() {
-            const mins = Math.floor(gameState.timeRemaining / 60);
-            const secs = gameState.timeRemaining % 60;
-            document.getElementById('timer').textContent = 
-                `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-            
-            const timerContainer = document.getElementById('timerContainer');
-            if (gameState.timeRemaining <= 30) {
-                timerContainer.classList.add('timer-critical');
-            }
-            
-            if (gameState.timeRemaining <= 0) {
-                endGame();
-            }
-        }
-
-        // Attack simulation
-        function simulateAttack() {
-            if (!gameState.running) return;
-            
-            // Pick random node to attack
-            const availableNodes = networkNodes.filter(n => 
-                !gameState.compromisedNodes.includes(n.id) && n.type !== 'firewall'
-            );
-            
-            if (availableNodes.length === 0) return;
-            
-            const target = availableNodes[Math.floor(Math.random() * availableNodes.length)];
-            gameState.compromisedNodes.push(target.id);
-            
-            // Update node visual
-            const nodeEl = document.getElementById(`node-${target.id}`);
-            if (nodeEl) {
-                nodeEl.classList.add('compromised');
-            }
-            
-            const attackTypes = [
-                { type: 'critical', title: '⚠️ INTRUSION DETECTED', desc: `${target.name} compromised!` },
-                { type: 'warning', title: '🔴 Malware Signature', desc: `Suspicious activity on ${target.name}` },
-                { type: 'critical', title: '🚨 RANSOMWARE ALERT', desc: `${target.name} encrypting files!` },
-                { type: 'warning', title: '📡 Data Exfiltration', desc: `Outbound connection from ${target.name}` },
-            ];
-            
-            const attack = attackTypes[Math.floor(Math.random() * attackTypes.length)];
-            addAlert(attack.type, attack.title, attack.desc);
-            playSound('danger');
-        }
-
-        // Take action
-        function takeAction(action) {
-            if (!gameState.running) return;
-            
-            const actions = {
-                isolate: { points: 100, msg: 'System isolated. Threat contained! 🛡️' },
-                analyze: { points: 50, msg: 'Threat analyzed. IOCs extracted. 🔍' },
-                notify: { points: 75, msg: 'Security team notified. Team assembling. 📢' },
-                block: { points: 150, msg: 'Attack vector blocked. Firewall updated. 🛡️' },
-                backup: { points: 200, msg: 'Backup systems activated. Data safe! 💾' },
-            };
-            
-            const actionData = actions[action];
-            
-            // Check if there's a compromised node
-            if (gameState.compromisedNodes.length > 0 && Math.random() > 0.3) {
-                // Success!
-                gameState.score += actionData.points;
-                gameState.streak++;
-                gameState.timeRemaining += 10; // Bonus time
-                
-                // Remove one compromised node
-                const fixed = gameState.compromisedNodes.pop();
-                const nodeEl = document.getElementById(`node-${fixed}`);
-                if (nodeEl) {
-                    nodeEl.classList.remove('compromised');
-                }
-                
-                addAlert('info', '✅ Response Successful', actionData.msg);
-                playSound('success');
-                
-                // Level up every 500 points
-                gameState.level = Math.floor(gameState.score / 500) + 1;
-            } else {
-                // Missed - no threat to respond to
-                gameState.streak = 0;
-                gameState.score = Math.max(0, gameState.score - 25);
-                addAlert('warning', '⚠️ No Target', 'No active threat to respond to. Wait for an attack!');
-            }
-            
-            updateStats();
-        }
-
-        // Start game
-        function startGame() {
-            if (gameState.running) return;
-            
-            // Resume audio context (browser requires user interaction)
-            audioCtx.resume();
-            
-            gameState.running = true;
-            gameState.score = 0;
-            gameState.threats = 0;
-            gameState.streak = 0;
-            gameState.level = 1;
-            gameState.timeRemaining = 120;
-            gameState.compromisedNodes = [];
-            
-            // Reset nodes
-            networkNodes.forEach(node => {
-                const nodeEl = document.getElementById(`node-${node.id}`);
-                if (nodeEl) nodeEl.classList.remove('compromised');
-            });
-            
-            // Clear alerts
-            document.getElementById('alertsList').innerHTML = '';
-            
-            // Update UI
-            document.getElementById('startBtn').style.display = 'none';
-            document.getElementById('actionsContainer').style.display = 'block';
-            document.getElementById('timerContainer').classList.remove('timer-critical');
-            document.getElementById('statusText').className = 'status-text active';
-            document.getElementById('statusText').textContent = '◉ SIMULATION ACTIVE';
-            
-            addAlert('info', '🚀 Simulation Started', 'First threats incoming...');
-            
-            // Start timers
-            gameState.timerInterval = setInterval(() => {
-                gameState.timeRemaining--;
-                updateTimer();
-            }, 1000);
-            
-            gameState.attackInterval = setInterval(() => {
-                if (gameState.running && Math.random() > 0.4) {
-                    simulateAttack();
-                }
-            }, 4000);
-            
-            // Immediate first attack
-            setTimeout(simulateAttack, 2000);
-            
-            updateStats();
-        }
-
-        // End game
-        function endGame() {
-            gameState.running = false;
-            
-            clearInterval(gameState.timerInterval);
-            clearInterval(gameState.attackInterval);
-            
-            document.getElementById('startBtn').style.display = 'block';
-            document.getElementById('startBtn').textContent = '▶ PLAY AGAIN';
-            document.getElementById('actionsContainer').style.display = 'none';
-            
-            document.getElementById('statusText').className = 'status-text win';
-            document.getElementById('statusText').textContent = `🏆 FINAL SCORE: ${gameState.score}`;
-            
-            addAlert('info', '⏱️ Time Up!', `Final Score: ${gameState.score} | Level: ${gameState.level} | Threats: ${gameState.threats}`);
-            
-            // Update copilot
-            document.getElementById('copilotMsg').innerHTML = 
-                `Great session! You scored <span class="highlight">${gameState.score} points</span> and reached level ${gameState.level}. 
-                Try again to beat your high score!`;
-        }
-
-        // AI Copilot messages
-        const copilotMsgs = [
-            "Ransomware spreading fast! <span class='highlight'>Isolate</span> the affected system now!",
-            "Suspicious outbound traffic detected. <span class='highlight'>Block</span> the connection!",
-            "Phishing email detected. <span class='highlight'>Notify</span> the team!",
-            "Firewall logs show brute force attempt. <span class='highlight'>Analyze</span> the source!",
-            "Backup servers offline! <span class='highlight'>Activate</span> backup protocols!",
-            "Multiple failed login attempts. <span class='highlight'>Block</span> the IP range!",
-            "Unusual data transfer to external IP. <span class='highlight'>Isolate</span> immediately!",
-        ];
-
-        // Update copilot periodically
-        setInterval(() => {
-            if (gameState.running && gameState.compromisedNodes.length > 0) {
-                const msg = copilotMsgs[Math.floor(Math.random() * copilotMsgs.length)];
-                document.getElementById('copilotMsg').innerHTML = msg;
-            }
-        }, 8000);
-
-        // Initialize
-        initNetworkMap();
-    </script>
+<script>
+const KB={
+ransomware:{t:"🪓 RANSOMWARE",d:"Encrypts files and demands payment!",w:"Malicious software that encrypts files. Spread via: phishing emails, exploit kits, RDP brute force.",c:"ISOLATE immediately! Disconnect from network.",p:"Keep offline backups, update systems, use endpoint protection.",e:"WannaCry (2017) infected 200K+ computers worldwide!"},
+phishing:{t:"🎣 PHISHING",d:"Fake emails stealing credentials!",d:"Fraudulent emails/websites to steal info. Spread via: email attachments, fake login pages, SMS, voice calls.",c:"ANALYZE the email! Check sender, report to security.",p:"Verify sender addresses, use 2FA, don't click unknown links.",e:"60% of breaches start with phishing emails!"},
+ddos:{t:"🌊 DDoS ATTACK",d:"Traffic flood crashing servers!",d:"Overwhelms servers with traffic. Types: botnets, DNS amplification, SYN flood.",c:"BLOCK at firewall! Enable DDoS protection.",p:"Use CDN with protection, rate limiting, traffic scrubbing.",e:"GitHub (2018) survived 1.35 Tbps attack!"},
+malware:{t:"🦠 MALWARE",d:"Malicious software infection!",d:"Umbrella term for viruses, trojans, worms. Spread: infected downloads, USBs, exploits.",c:"ANALYZE and ISOLATE! Get IOC details.",p:"Antivirus, avoid pirated software, keep OS updated.",e:"Stuxnet (2010) physically damaged nuclear centrifuges!"}};
+const ATKS=[
+{type:'ransomware',m:[{t:"🚨 RANSOMWARE ALERT",d:"Files being encrypted!",a:'isolate'},{t:"🪓 ENCRYPTION DETECTED",d:"Database server locked!",a:'isolate'},{t:"🔐 MASS ENCRYPTION",d:"Mail server files locked!",a:'isolate'}]},
+{type:'phishing',m:[{t:"🎣 PHISHING DETECTED",d:"User clicked link!",a:'analyze'},{t:"📧 CEO FRAUD",d:"Business email compromise!",a:'notify'},{t:"🔑 CREDENTIAL THEFT",d:"Unknown login attempt!",a:'block'}]},
+{type:'ddos',m:[{t:"🌊 DDoS IN PROGRESS",d:"Traffic flood to web!",a:'block'},{t:"🚦 TRAFFIC SPIKE",d:"10x normal traffic!",a:'block'},{t:"⚠️ SERVICE DOWN",d:"Server unresponsive!",a:'backup'}]},
+{type:'malware',m:[{t:"🦠 MALWARE DETECTED",d:"Trojan on workstation!",a:'analyze'},{t:"🐛 BACKDOOR FOUND",d:"Suspicious outbound!",a:'isolate'},{t:"🔍 ROOTKIT ALERT",d:"Hidden process!",a:'analyze'}]}];
+const NN=[{i:'fw',n:'Firewall',ic:'🛡️',x:50,y:45,ty:'fw'},{i:'web',n:'Web',ic:'🌐',x:25,y:25,ty:'sv'},{i:'db',n:'DB',ic:'🗄️',x:75,y:25,ty:'sv'},{i:'mail',n:'Mail',ic:'📧',x:15,y:50,ty:'sv'},{i:'ws1',n:'WS 1',ic:'💻',x:40,y:70,ty:'ws'},{i:'ws2',n:'WS 2',ic:'💻',x:60,y:70,ty:'ws'},{i:'ws3',n:'WS 3',ic:'💻',x:50,y:88,ty:'ws'}];
+let gs={r:false,s:0,co:0,sk:0,l:1,tm:120,ti:null,ai:null,cN:[],ct:null,ob:{r:false,p:false,d:false,m:false}};
+const LV=[{n:"Novice",x:0,ob:"Learn about Ransomware attacks"},{n:"Analyst",x:500,ob:"Understand Phishing campaigns"},{n:"Expert",x:1500,ob:"Counter DDoS attacks"},{n:"Master",x:3000,ob:"Handle Malware incidents"}];
+let ac=new(window.AudioContext||window.webkitAudioContext)();
+function ps(t){if(!gs.snd)return;let o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);if(t==='a'){o.frequency.value=800;g.gain.setValueAtTime(0.1,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+0.3);}else if(t==='s'){o.frequency.value=523.25;g.gain.setValueAtTime(0.1,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+0.2);}else if(t==='d'){o.frequency.value=200;o.type='sawtooth';g.gain.setValueAtTime(0.1,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.01,ac.currentTime+0.5);}o.start();o.stop(ac.currentTime+0.5);}
+function inM(){const m=document.getElementById('nm');NN.forEach(n=>{let e=document.createElement('div');e.className='node '+n.ty;e.id='n-'+n.i;e.style.left=n.x+'%';e.style.top=n.y+'%';e.setAttribute('data-name',n.n);e.innerHTML=n.ic;m.appendChild(e);});}
+function aA(t,title,desc){const l=document.getElementById('al'),a=document.createElement('div');a.className='alert '+t;a.innerHTML='<div class="at">'+new Date().toLocaleTimeString()+'</div><div class="at-t">'+title+'</div><div class="ad">'+desc+'</div>';l.insertBefore(a,l.firstChild);while(l.children.length>8)l.removeChild(l.lastChild);gs.co++;uS();ps('a');}
+function uS(){document.getElementById('score').textContent=gs.s;document.getElementById('ms').textContent=gs.s;document.getElementById('contain').textContent=gs.co;document.getElementById('streak').textContent=gs.sk;document.getElementById('level').textContent=gs.l;let cr=LV[gs.l-1],nx=LV[gs.l]||cr,xp=gs.s-cr.x,need=nx.x-cr.x;document.getElementById('ln').textContent='Level '+gs.l+': '+cr.n;document.getElementById('xp').textContent=xp+'/'+need+' XP';document.getElementById('pf').style.width=(xp/need*100)+'%';document.getElementById('obj').innerHTML=gs.ct?'<span class="ob-d">'+KB[gs.ct].t.split(' ')[0]+' contained!</span> Learn about '+Object.entries(gs.ob).filter(x=>!x[1]).map(x=>x[0]).join(', '):cr.ob;}
+function uT(){let m=Math.floor(gs.tm/60),s=gs.tm%60;document.getElementById('tv').textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;if(gs.tm<=30)document.getElementById('tm').classList.add('cri');if(gs.tm<=0)eG();}
+function sA(){if(!gs.r)return;let at=ATKS[Math.floor(Math.random()*ATKS.length)],msg=at.m[Math.floor(Math.random()*at.m.length)],nodes=NN.filter(n=>!gs.cN.includes(n.i)&&n.ty!=='fw');if(nodes.length===0)return;let tn=nodes[Math.floor(Math.random()*nodes.length)];gs.cN.push(tn.i);gs.ct=at.type;document.getElementById('n-'+tn.i).classList.add('cp');aA('cri',msg.t,msg.d);ps('d');}
+function take(ac){if(!gs.r||!gs.ct)return;let correct={isolate:['ransomware','malware'],analyze:['phishing','malware'],notify:['phishing'],block:['ddos','phishing'],backup:['ddos']},kb=KB[gs.ct],fb=document.getElementById('fb');if(correct[ac].includes(gs.ct)){gs.s+=ac==='isolate'?100:ac==='analyze'?50:ac==='notify'?75:ac==='block'?150:200;gs.sk++;gs.ob[gs.ct]=true;document.getElementById('ct'+(gs.ct==='ransomware'?'r':gs.ct==='phishing'?'p':gs.ct==='ddos'?'d':'m')).classList.add('un');let fx=gs.cN.pop();document.getElementById('n-'+fx).classList.remove('cp');gs.l=Math.min(4,Math.floor(gs.s/500)+1);gs.tm+=10;fb.className='fb show cr';fb.innerHTML='<b>✓ Correct!</b> '+kb.c+'<br><br><b>💡 '+kb.t+':</b> '+kb.d+'<br><br><b>How it spreads:</b>'+kb.w+'<br><br><b>Prevention:</b>'+kb.p+'<br><br><b>📖 '+kb.e+'</b>';ps('s');}else{gs.sk=0;gs.s=Math.max(0,gs.s-25);fb.className='fb show wr';fb.innerHTML='<b>✗ Not quite!</b> For '+kb.t+', the best response is: <b>'+kb.c+'</b><br><br>💡 '+kb.d;aA('war','Response suboptimal','Try: '+kb.c);ps('d');}gs.ct=null;uS();}
+function startGame(){if(gs.r)return;ac.resume();gs.r=true;gs.s=0;gs.co=0;gs.sk=0;gs.l=1;gs.tm=120;gs.cN=[];gs.ct=null;gs.ob={r:false,p:false,d:false,m:false};NN.forEach(n=>document.getElementById('n-'+n.i).classList.remove('cp'));document.getElementById('al').innerHTML='';document.getElementById('sb').style.display='none';document.getElementById('ac').style.display='block';document.getElementById('tm').classList.remove('cri');document.getElementById('fb').className='fb';['tr','tp','td','tm'].forEach(id=>document.getElementById(id).classList.remove('un'));aA('inf','🚀 Mission Started','First threats incoming...');gs.ti=setInterval(()=>{gs.tm--;uT();},1000);gs.ai=setInterval(()=>{if(gs.r&&Math.random()>0.3)sA();},3500);setTimeout(sA,2000);uS();}
+function eG(){gs.r=false;clearInterval(gs.ti);clearInterval(gs.ai);document.getElementById('sb').style.display='block';document.getElementById('sb').textContent='▶ PLAY AGAIN';document.getElementById('ac').style.display='none';document.getElementById('fb').className='fb show cr';document.getElementById('fb').innerHTML='<b>🏆 Mission Complete!</b><br>Final Score: '+gs.s+' | Level: '+gs.l+'<br><br>You learned about: '+Object.entries(gs.ob).filter(x=>x[1]).map(x=>x[0]).join(', ');aA('inf','⏱️ Time Up!','Score: '+gs.s+' | Level: '+gs.l);}
+document.addEventListener('keydown',e=>{if(!gs.r)return;if(e.key==='1')take('isolate');if(e.key==='2')take('analyze');if(e.key==='3')take('notify');if(e.key==='4')take('block');if(e.key==='5')take('backup');});
+inM();
+</script>
 </body>
 </html>
