@@ -82,6 +82,11 @@
     "T1498",
     "T1499"
   ],
-  "difficulty": "easy",
-  "estimated_duration_minutes": 50
+  "difficulty": "beginner",
+  "estimated_duration_minutes": 50,
+  "policy_links": [
+    "policy-network-monitoring",
+    "policy-incident-response",
+    "policy-cloud-resilience"
+  ]
 }

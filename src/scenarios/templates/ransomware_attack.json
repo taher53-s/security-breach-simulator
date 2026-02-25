@@ -98,6 +98,11 @@
     "T1486",
     "T1021"
   ],
-  "difficulty": "medium",
-  "estimated_duration_minutes": 60
+  "difficulty": "intermediate",
+  "estimated_duration_minutes": 60,
+  "policy_links": [
+    "policy-endpoint-monitoring",
+    "policy-network-segmentation",
+    "policy-backup-recovery"
+  ]
 }

@@ -66,6 +66,11 @@
     "T1567",
     "T1005"
   ],
-  "difficulty": "hard",
-  "estimated_duration_minutes": 30
+  "difficulty": "expert",
+  "estimated_duration_minutes": 30,
+  "policy_links": [
+    "policy-data-loss-prevention",
+    "policy-user-activity",
+    "policy-insider-threat"
+  ]
 }
