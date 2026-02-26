@@ -1,0 +1,92 @@
+{
+  "techniques": [
+    {
+      "id": "T1566",
+      "name": "Phishing",
+      "tactic": "Initial Access",
+      "description": "Adversaries may send phishing messages to gain access to victim systems. Phishing is when an attacker attempts to trick a user into submitting private data, clicking a malicious link, or opening a malicious attachment.",
+      "detection": ["Monitor for suspicious email attachments", "Look for links to newly registered domains", "Check email headers for spoofing indicators", "Alert on macro-enabled document execution"],
+      "mitigations": ["Deploy email filtering with sandboxing", "Enforce multi-factor authentication", "User awareness training", "Disable macros by default in Office"],
+      "real_world": "SolarWinds supply chain attack began with spear-phishing targeting IT administrators",
+      "subtechniques": ["T1566.001 - Spearphishing Attachment", "T1566.002 - Spearphishing Link"],
+      "severity": "high"
+    },
+    {
+      "id": "T1486",
+      "name": "Data Encrypted for Impact",
+      "tactic": "Impact",
+      "description": "Adversaries may encrypt data on target systems to interrupt availability. They may attempt to render stored data inaccessible by encrypting files or data and then extorting the victim for a decryption key.",
+      "detection": ["Monitor for rapid file modification events", "Alert on new file extensions being written at high volume", "Detect VSS deletion commands", "Monitor for ransom note file creation (README.txt, DECRYPT.txt)"],
+      "mitigations": ["Maintain offline backups with 3-2-1 strategy", "Implement endpoint detection and response", "Restrict write permissions to critical directories", "Monitor and alert on bulk file modification"],
+      "real_world": "WannaCry (2017) infected 200,000+ systems across 150 countries in 72 hours",
+      "subtechniques": [],
+      "severity": "critical"
+    },
+    {
+      "id": "T1021",
+      "name": "Remote Services",
+      "tactic": "Lateral Movement",
+      "description": "Adversaries may use Valid Accounts to log into a service specifically designed to accept remote connections. This allows the adversary to move laterally through an environment using legitimate credentials.",
+      "detection": ["Alert on RDP/SMB connections between workstations", "Monitor for unusual service account usage", "Detect logons outside business hours from service accounts", "Alert on new RDP sessions from non-admin accounts"],
+      "mitigations": ["Network segmentation to restrict lateral movement", "Privileged Access Workstations for admin tasks", "JIT (just-in-time) privileged access", "Disable RDP on workstations unless required"],
+      "real_world": "NotPetya spread via EternalBlue SMB exploit, causing $10B in damages globally",
+      "subtechniques": ["T1021.001 - Remote Desktop Protocol", "T1021.002 - SMB/Windows Admin Shares"],
+      "severity": "high"
+    },
+    {
+      "id": "T1110",
+      "name": "Brute Force",
+      "tactic": "Credential Access",
+      "description": "Adversaries may use brute force techniques to gain access to accounts when passwords are unknown. Brute force techniques include: password guessing, password spraying, and credential stuffing.",
+      "detection": ["Alert on 10+ failed logons in 60 seconds from one source", "Monitor for distributed logon failures across multiple accounts", "Detect logon attempts from TOR exit nodes", "Alert on successful logon following multiple failures"],
+      "mitigations": ["Account lockout policy (10 failures = 30 min lockout)", "Multi-factor authentication", "Geo-blocking for high-risk regions", "CAPTCHA on public-facing login pages"],
+      "real_world": "2021 Colonial Pipeline attack preceded by VPN credential compromise via dark web",
+      "subtechniques": ["T1110.001 - Password Guessing", "T1110.003 - Password Spraying", "T1110.004 - Credential Stuffing"],
+      "severity": "medium"
+    },
+    {
+      "id": "T1041",
+      "name": "Exfiltration Over C2 Channel",
+      "tactic": "Exfiltration",
+      "description": "Adversaries may steal data by exfiltrating it over an existing command and control channel. Stolen data is encoded into the normal communications channel using the same protocol as the C2.",
+      "detection": ["Alert on large outbound data transfers > 500MB", "Monitor for long-duration low-bandwidth connections to rare IPs", "Detect DNS queries with unusually long subdomains (DNS tunnelling)", "Alert on HTTPS traffic to newly registered domains"],
+      "mitigations": ["Data Loss Prevention (DLP) on all egress points", "Network traffic analysis for anomaly detection", "Egress filtering to allowed destination list", "UEBA to detect unusual data access patterns"],
+      "real_world": "APT41 used encrypted C2 channels to exfiltrate 1TB+ from healthcare organisations",
+      "subtechniques": [],
+      "severity": "critical"
+    },
+    {
+      "id": "T1078",
+      "name": "Valid Accounts",
+      "tactic": "Initial Access",
+      "description": "Adversaries may obtain and abuse credentials of existing accounts as a means of gaining initial access or persistence. Compromised credentials may be used to bypass access controls.",
+      "detection": ["Alert on logons from impossible travel (same account, different countries within 1 hour)", "Monitor for service accounts logging on interactively", "Detect account usage outside normal hours", "Alert on accounts logging in from Tor/VPN services"],
+      "mitigations": ["Privileged Identity Management (PIM)", "Conditional access policies", "Regular account audits and access reviews", "Zero Trust architecture"],
+      "real_world": "Uber breach (2022) via social engineering to steal contractor VPN credentials",
+      "subtechniques": ["T1078.001 - Default Accounts", "T1078.003 - Local Accounts"],
+      "severity": "high"
+    },
+    {
+      "id": "T1567",
+      "name": "Exfiltration Over Web Service",
+      "tactic": "Exfiltration",
+      "description": "Adversaries may use an existing, legitimate external Web service to exfiltrate data rather than their primary command and control channel. Popular Web services acting as an exfiltration channel may give a significant amount of cover due to the likelihood of blending into normal traffic.",
+      "detection": ["Monitor for unusual uploads to cloud storage (Dropbox, OneDrive, Google Drive)", "Alert on access to unapproved cloud services", "Detect large file uploads via proxy logs", "Alert on OAuth token grants to unknown applications"],
+      "mitigations": ["Cloud Access Security Broker (CASB)", "Block access to non-approved cloud storage", "DLP policies for cloud uploads", "Monitor and alert on bulk data transfers"],
+      "real_world": "Insider at Tesla stole 26,000 files by uploading to personal cloud storage",
+      "subtechniques": ["T1567.002 - Exfiltration to Cloud Storage"],
+      "severity": "high"
+    },
+    {
+      "id": "T1190",
+      "name": "Exploit Public-Facing Application",
+      "tactic": "Initial Access",
+      "description": "Adversaries may attempt to take advantage of a weakness in an Internet-facing computer or program using software, data, or commands in order to cause unintended or unanticipated behavior.",
+      "detection": ["Monitor web application firewall logs for injection patterns", "Alert on error rate spikes from public-facing applications", "Detect unusual process execution from web server processes", "Monitor for new administrative accounts created by web services"],
+      "mitigations": ["Regular vulnerability scanning and patching", "Web Application Firewall (WAF)", "Input validation and output encoding", "Containerise public-facing applications"],
+      "real_world": "Log4Shell (CVE-2021-44228) allowed RCE on millions of systems via a log message",
+      "subtechniques": [],
+      "severity": "critical"
+    }
+  ]
+}

@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Security Breach Simulator — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Sora:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#05050a;--panel:#09090f;--card:#0e0e18;--card2:#12121f;
+  --border:#16162a;--border2:#1e1e38;
+  --cyan:#00d4ff;--cyan-dim:rgba(0,212,255,0.07);
+  --red:#ff4d4d;--red-dim:rgba(255,77,77,0.07);
+  --amber:#ffaa00;--amber-dim:rgba(255,170,0,0.07);
+  --green:#00e676;--green-dim:rgba(0,230,118,0.07);
+  --purple:#a855f7;--text:#c8cce8;--dim:#55577a;
+  --sidebar:240px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{height:100%}
+body{font-family:'Space Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+
+/* Noise texture */
+body::before{content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:0.4}
+
+/* ── Sidebar ────────────────────────────────── */
+#sidebar{width:var(--sidebar);background:var(--panel);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;
+  transition:transform 0.3s}
+.sidebar-logo{padding:20px 18px;border-bottom:1px solid var(--border)}
+.logo-mark{font-family:'Sora',sans-serif;font-size:1rem;font-weight:800;letter-spacing:-0.5px}
+.logo-mark span{color:var(--cyan)}
+.logo-sub{font-size:0.55rem;color:var(--dim);text-transform:uppercase;letter-spacing:3px;margin-top:2px}
+nav{padding:12px 0;flex:1}
+.nav-group{font-size:0.55rem;text-transform:uppercase;letter-spacing:3px;color:var(--dim);padding:12px 18px 6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;font-size:0.72rem;
+  cursor:pointer;transition:all 0.15s;color:var(--dim);border-left:2px solid transparent}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,0.02)}
+.nav-item.active{color:var(--cyan);background:var(--cyan-dim);border-left-color:var(--cyan)}
+.nav-icon{width:16px;text-align:center;font-size:13px}
+.sidebar-bottom{padding:14px 18px;border-top:1px solid var(--border)}
+.quick-launch{width:100%;padding:10px;background:linear-gradient(135deg,var(--cyan),#008cb3);
+  border:none;color:#000;font-family:'Sora',sans-serif;font-weight:700;font-size:0.75rem;
+  border-radius:8px;cursor:pointer;letter-spacing:1px;transition:all 0.2s}
+.quick-launch:hover{box-shadow:0 0 20px rgba(0,212,255,0.3);transform:scale(1.02)}
+.mini-card{background:var(--card);border:1px solid var(--border2);border-radius:8px;padding:10px;margin-top:10px}
+.mini-card-tier{font-size:0.7rem;font-weight:700;color:var(--cyan);margin-bottom:4px}
+.mini-xp-bar{height:3px;background:var(--border2);border-radius:2px;margin-top:4px}
+.mini-xp-fill{height:100%;background:var(--cyan);border-radius:2px;width:0%;transition:width 0.5s}
+
+/* ── Main ───────────────────────────────────── */
+#main{margin-left:var(--sidebar);flex:1;position:relative;z-index:1}
+
+/* ── Top bar ────────────────────────────────── */
+#topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;
+  border-bottom:1px solid var(--border);background:rgba(9,9,15,0.8);
+  backdrop-filter:blur(10px);position:sticky;top:0;z-index:50}
+.topbar-title{font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:700}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.theme-toggle{background:var(--card);border:1px solid var(--border2);color:var(--dim);
+  padding:6px 12px;border-radius:6px;font-family:'Space Mono',monospace;font-size:0.7rem;cursor:pointer;transition:all 0.2s}
+.theme-toggle:hover{border-color:var(--cyan);color:var(--cyan)}
+.kbd{display:inline-flex;align-items:center;gap:4px;font-size:0.6rem;color:var(--dim)}
+.kbd kbd{background:var(--card);border:1px solid var(--border2);padding:2px 5px;border-radius:3px;font-family:inherit}
+
+/* ── Content ────────────────────────────────── */
+#content{padding:20px 24px;max-width:1400px}
+
+/* ── KPI Row ─────────────────────────────────── */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.kpi-card{background:var(--card);border:1px solid var(--border2);border-radius:12px;padding:16px;
+  position:relative;overflow:hidden;transition:border-color 0.2s}
+.kpi-card:hover{border-color:var(--border)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:2px 2px 0 0}
+.kpi-card.c::before{background:var(--cyan)}
+.kpi-card.r::before{background:var(--red)}
+.kpi-card.a::before{background:var(--amber)}
+.kpi-card.g::before{background:var(--green)}
+.kpi-label{font-size:0.6rem;text-transform:uppercase;letter-spacing:2px;color:var(--dim);margin-bottom:6px}
+.kpi-value{font-family:'Sora',sans-serif;font-size:2rem;font-weight:800;line-height:1}
+.kpi-sub{font-size:0.65rem;color:var(--dim);margin-top:4px}
+.kpi-spark{margin-top:8px}
+
+/* ── Middle row ──────────────────────────────── */
+.mid-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px}
+.chart-card{background:var(--card);border:1px solid var(--border2);border-radius:12px;padding:16px}
+.chart-title{font-size:0.65rem;text-transform:uppercase;letter-spacing:2px;color:var(--dim);
+  margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.chart-title::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--cyan)}
+.chart-wrap{display:flex;justify-content:center}
+
+/* ── Runs table ──────────────────────────────── */
+.table-card{background:var(--card);border:1px solid var(--border2);border-radius:12px;padding:16px;margin-bottom:20px}
+table{width:100%;border-collapse:collapse}
+th{font-size:0.6rem;text-transform:uppercase;letter-spacing:2px;color:var(--dim);padding:6px 10px;border-bottom:1px solid var(--border2);text-align:left}
+td{padding:10px;font-size:0.78rem;border-bottom:1px solid var(--border);transition:background 0.15s}
+tr:hover td{background:rgba(255,255,255,0.015)}
+tr:last-child td{border-bottom:none}
+.grade{display:inline-block;width:26px;height:26px;border-radius:6px;font-weight:700;
+  font-size:0.8rem;text-align:center;line-height:26px}
+
+/* ── Scenario grid ───────────────────────────── */
+.scenario-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:20px}
+.scenario-card{background:var(--card);border:1px solid var(--border2);border-radius:12px;padding:16px;
+  cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;transform-style:preserve-3d}
+.scenario-card:hover{border-color:var(--cyan);transform:translateY(-3px);box-shadow:0 8px 32px rgba(0,212,255,0.08)}
+.scenario-card .front, .scenario-card .back{backface-visibility:hidden}
+.s-sev{font-size:0.6rem;text-transform:uppercase;letter-spacing:1px;padding:3px 8px;border-radius:4px;font-weight:700}
+.s-sev.critical{background:var(--red-dim);color:var(--red)}
+.s-sev.high{background:var(--amber-dim);color:var(--amber)}
+.s-sev.medium{background:var(--cyan-dim);color:var(--cyan)}
+.s-name{font-family:'Sora',sans-serif;font-size:0.95rem;font-weight:600;margin:8px 0 4px}
+.s-desc{font-size:0.72rem;color:var(--dim);line-height:1.5;margin-bottom:12px}
+.s-meta{display:flex;gap:8px;flex-wrap:wrap}
+.s-tag{font-size:0.6rem;padding:2px 8px;border-radius:4px;background:var(--card2);color:var(--dim);border:1px solid var(--border2)}
+.s-actions{display:flex;gap:8px;margin-top:12px}
+.s-btn{flex:1;padding:7px;border:1px solid var(--border2);background:transparent;color:var(--dim);
+  font-family:'Space Mono',monospace;font-size:0.65rem;border-radius:6px;cursor:pointer;transition:all 0.15s}
+.s-btn:hover{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim)}
+.s-btn.primary{background:var(--cyan-dim);color:var(--cyan);border-color:var(--cyan)}
+
+/* ── Filters ─────────────────────────────────── */
+.filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.filter-btn{padding:5px 12px;border:1px solid var(--border2);background:transparent;color:var(--dim);
+  font-family:'Space Mono',monospace;font-size:0.65rem;border-radius:20px;cursor:pointer;transition:all 0.2s}
+.filter-btn:hover,.filter-btn.active{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-dim)}
+
+/* ── Skeleton loading ────────────────────────── */
+.skel{background:linear-gradient(90deg,var(--card) 25%,var(--card2) 50%,var(--card) 75%);
+  background-size:200% 100%;animation:skel-anim 1.5s infinite;border-radius:4px}
+@keyframes skel-anim{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ── Help modal ─────────────────────────────── */
+#help-modal{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:200;display:none;align-items:center;justify-content:center}
+#help-modal.show{display:flex}
+.help-box{background:var(--panel);border:1px solid var(--border2);border-radius:14px;padding:28px;max-width:440px;width:90%}
+.help-kbd{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:0.78rem}
+.help-kbd:last-child{border-bottom:none}
+
+/* ── Ticker ─────────────────────────────────── */
+#bottom-ticker{position:fixed;bottom:0;left:var(--sidebar);right:0;background:rgba(9,9,15,0.9);
+  border-top:1px solid var(--border);padding:6px 16px;font-size:0.62rem;color:var(--dim);overflow:hidden;z-index:50}
+.ticker-inner{white-space:nowrap;animation:ticker 30s linear infinite}
+@keyframes ticker{from{transform:translateX(100vw)}to{transform:translateX(-200%)}}
+
+/* ── Light mode ─────────────────────────────── */
+body.light{--bg:#f0f2f8;--panel:#ffffff;--card:#f8f9fc;--card2:#eef0f6;--border:#e0e4f0;--border2:#d0d5e8;--text:#1a1c2e;--dim:#7a7e9a}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">Security<span>Breach</span></div>
+    <div class="logo-sub">Simulator v1.0.0</div>
+  </div>
+  <nav>
+    <div class="nav-group">Navigation</div>
+    <div class="nav-item active" onclick="showSection('dashboard')"><span class="nav-icon">📊</span>Dashboard</div>
+    <div class="nav-item" onclick="showSection('scenarios')"><span class="nav-icon">🎯</span>Scenarios</div>
+    <div class="nav-item" onclick="showSection('runs')"><span class="nav-icon">📋</span>My Runs</div>
+    <div class="nav-item" onclick="showSection('knowledge')"><span class="nav-icon">📚</span>Knowledge Base</div>
+    <div class="nav-group">Tools</div>
+    <div class="nav-item" onclick="window.location='soc.html'"><span class="nav-icon">🛡</span>SOC Simulator</div>
+    <div class="nav-item" onclick="window.location='/health'"><span class="nav-icon">💚</span>API Health</div>
+  </nav>
+  <div class="sidebar-bottom">
+    <button class="quick-launch" onclick="quickLaunch()">⚡ Quick Launch</button>
+    <div class="mini-card">
+      <div class="mini-card-tier" id="sb-tier">Tier 1 Analyst</div>
+      <div style="font-size:0.62rem;color:var(--dim)" id="sb-xp">0 XP total</div>
+      <div class="mini-xp-bar"><div class="mini-xp-fill" id="sb-fill"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Main -->
+<div id="main">
+  <div id="topbar">
+    <div class="topbar-title" id="section-title">Dashboard</div>
+    <div class="topbar-right">
+      <div class="kbd"><kbd>G</kbd>Generate <kbd>L</kbd>List <kbd>S</kbd>SOC <kbd>?</kbd>Help</div>
+      <button class="theme-toggle" onclick="toggleTheme()">◑ THEME</button>
+    </div>
+  </div>
+  <div id="content">
+
+    <!-- ── DASHBOARD SECTION ── -->
+    <div id="sec-dashboard">
+      <div class="kpi-row">
+        <div class="kpi-card c">
+          <div class="kpi-label">Total Scenarios</div>
+          <div class="kpi-value" id="kpi-scenarios" style="color:var(--cyan)"><div class="skel" style="height:36px;width:60px"></div></div>
+          <div class="kpi-sub">7 attack categories</div>
+          <div class="kpi-spark"><canvas id="spark-scenarios" width="140" height="32"></canvas></div>
+        </div>
+        <div class="kpi-card r">
+          <div class="kpi-label">Best Score</div>
+          <div class="kpi-value" id="kpi-best" style="color:var(--red)"><div class="skel" style="height:36px;width:60px"></div></div>
+          <div class="kpi-sub" id="kpi-best-sub">All time</div>
+          <div class="kpi-spark"><canvas id="spark-best" width="140" height="32"></canvas></div>
+        </div>
+        <div class="kpi-card a">
+          <div class="kpi-label">Total Policies</div>
+          <div class="kpi-value" id="kpi-policies" style="color:var(--amber)"><div class="skel" style="height:36px;width:60px"></div></div>
+          <div class="kpi-sub">Compliance catalog</div>
+          <div class="kpi-spark"><canvas id="spark-policies" width="140" height="32"></canvas></div>
+        </div>
+        <div class="kpi-card g">
+          <div class="kpi-label">API Status</div>
+          <div class="kpi-value" id="kpi-api" style="color:var(--green)">—</div>
+          <div class="kpi-sub" id="kpi-api-sub">Checking...</div>
+          <div class="kpi-spark"><canvas id="spark-api" width="140" height="32"></canvas></div>
+        </div>
+      </div>
+
+      <div class="mid-row">
+        <div class="chart-card">
+          <div class="chart-title">Threat Landscape</div>
+          <div class="chart-wrap"><canvas id="donut-chart" width="180" height="180"></canvas></div>
+          <div id="donut-legend" style="margin-top:12px;display:flex;flex-direction:column;gap:5px"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Skills Radar</div>
+          <div class="chart-wrap"><canvas id="dash-radar" width="190" height="190"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Severity Distribution</div>
+          <div id="sev-bars" style="padding:4px 0"></div>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div class="chart-title" style="margin:0">Recent Scenarios</div>
+          <button onclick="showSection('scenarios')" style="background:none;border:1px solid var(--border2);color:var(--dim);font-family:'Space Mono',monospace;font-size:0.65rem;padding:5px 10px;border-radius:6px;cursor:pointer">View All →</button>
+        </div>
+        <div id="recent-table-wrap"></div>
+      </div>
+    </div>
+
+    <!-- ── SCENARIOS SECTION ── -->
+    <div id="sec-scenarios" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:600">All Scenarios</div>
+        <div style="font-size:0.7rem;color:var(--dim)" id="scenario-count-label"></div>
+      </div>
+      <div class="filters" id="filter-row"></div>
+      <div class="scenario-grid" id="scenario-grid"></div>
+    </div>
+
+    <!-- ── RUNS SECTION ── -->
+    <div id="sec-runs" style="display:none">
+      <div style="font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:600;margin-bottom:14px">My Runs</div>
+      <div class="table-card" id="runs-table-wrap">
+        <p style="color:var(--dim);font-size:0.8rem">Loading run history...</p>
+      </div>
+    </div>
+
+    <!-- ── KNOWLEDGE SECTION ── -->
+    <div id="sec-knowledge" style="display:none">
+      <div style="font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:600;margin-bottom:14px">MITRE ATT&CK Knowledge Base</div>
+      <div id="kb-grid" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Help Modal -->
+<div id="help-modal">
+  <div class="help-box">
+    <div style="font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:16px">⌨️ Keyboard Shortcuts</div>
+    <div class="help-kbd"><span>Open this help</span><kbd>?</kbd></div>
+    <div class="help-kbd"><span>Go to Dashboard</span><kbd>D</kbd></div>
+    <div class="help-kbd"><span>Go to Scenarios</span><kbd>L</kbd></div>
+    <div class="help-kbd"><span>Open SOC Simulator</span><kbd>S</kbd></div>
+    <div class="help-kbd"><span>Quick launch random scenario</span><kbd>G</kbd></div>
+    <div class="help-kbd"><span>Toggle theme</span><kbd>T</kbd></div>
+    <div class="help-kbd"><span>Close modal</span><kbd>Esc</kbd></div>
+    <button onclick="closeHelp()" style="margin-top:16px;width:100%;padding:10px;background:var(--cyan);border:none;color:#000;font-family:'Sora',sans-serif;font-weight:700;border-radius:8px;cursor:pointer">Close</button>
+  </div>
+</div>
+
+<!-- Bottom Ticker -->
+<div id="bottom-ticker">
+  <span class="ticker-inner">
+    ⚡ APT29 adds new persistence mechanisms — T1053.005 &nbsp;|&nbsp;
+    🔴 CISA Alert AA26-031A: Critical RCE in popular SIEM platform &nbsp;|&nbsp;
+    🟡 LockBit 4.0 targets healthcare sector — patch KB5027285 immediately &nbsp;|&nbsp;
+    🟢 Threat intel updated: 1,247 new C2 IPs blocked globally &nbsp;|&nbsp;
+    ⚡ BlackCat ransomware evolves — new anti-forensics via VSS hooks &nbsp;|&nbsp;
+    🔵 MITRE ATT&CK v14 released — 18 new techniques added &nbsp;|&nbsp;
+  </span>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// DATA / STATE
+// ══════════════════════════════════════════════════════════
+const API = '';
+let allScenarios = [], activeFilter = 'all';
+
+const MOCK_SCENARIOS = [
+  {id:'ransomware_attack',name:'Ransomware Attack',description:'Ransomware enters via phishing and spreads laterally, encrypting critical systems.',severity:'critical',category:'malware',difficulty:'intermediate',estimated_duration_minutes:60},
+  {id:'phishing_lateral_movement',name:'Phishing → Lateral Movement',description:'Spear-phishing campaign escalates to domain admin and data exfiltration.',severity:'critical',category:'phishing',difficulty:'advanced',estimated_duration_minutes:60},
+  {id:'supply_chain_compromise',name:'Supply Chain Tampering',description:'Compromised vendor build pushes malicious code into production pipeline.',severity:'high',category:'supply_chain',difficulty:'advanced',estimated_duration_minutes:60},
+  {id:'insider_threat_data_exfil',name:'Insider Threat — Exfiltration',description:'Privileged employee exfiltrates sensitive data to personal cloud storage.',severity:'critical',category:'insider_threat',difficulty:'expert',estimated_duration_minutes:30},
+  {id:'credential_theft_attack',name:'Credential Theft Attack',description:'Credential stuffing and phishing to compromise accounts and escalate privileges.',severity:'high',category:'credential_attack',difficulty:'intermediate',estimated_duration_minutes:30},
+  {id:'ddos_attack',name:'DDoS — Service Disruption',description:'Distributed attack overwhelms servers, making services unavailable.',severity:'critical',category:'availability',difficulty:'beginner',estimated_duration_minutes:50},
+  {id:'zero_day_exploit',name:'Zero-Day Exploit',description:'Attacker exploits unknown vulnerability to gain initial access.',severity:'critical',category:'exploitation',difficulty:'expert',estimated_duration_minutes:70},
+];
+
+const MOCK_RUNS = [
+  {run_id:'run_20260225_143022',scenario_id:'ransomware_attack',total_score:78,grade:'B',difficulty:'hard',completed_at:'2026-02-25T14:30:22'},
+  {run_id:'run_20260224_091510',scenario_id:'phishing_lateral_movement',total_score:92,grade:'A',difficulty:'medium',completed_at:'2026-02-24T09:15:10'},
+  {run_id:'run_20260223_200341',scenario_id:'ddos_attack',total_score:55,grade:'C',difficulty:'easy',completed_at:'2026-02-23T20:03:41'},
+];
+
+const MOCK_KB = [
+  {id:'T1566',name:'Phishing',tactic:'Initial Access',severity:'high',description:'Adversaries send phishing messages to gain initial access. Includes spear-phishing with attachments and links.',detection:'Email filter alerts, anomalous link clicks, macro execution events (event 4688).',mitigation:'Email sandboxing, MFA, user training.'},
+  {id:'T1486',name:'Data Encrypted for Impact',tactic:'Impact',severity:'critical',description:'Ransomware encrypts files to disrupt availability and extort victims.',detection:'Bulk file modification (4663), new extensions (.locked), VSS deletion (7045).',mitigation:'Offline backups (3-2-1), EDR with rollback, file activity monitoring.'},
+  {id:'T1021',name:'Remote Services',tactic:'Lateral Movement',severity:'high',description:'Adversaries use valid credentials to move laterally via RDP, SMB, WMI.',detection:'RDP between workstations (4624 logon type 10), ADMIN$ access (5145), WMI execution (4688).',mitigation:'Network segmentation, disable RDP on workstations, privileged access workstations.'},
+  {id:'T1110',name:'Brute Force',tactic:'Credential Access',severity:'medium',description:'Automated password guessing, spraying, and credential stuffing attacks.',detection:'10+ event 4625 from one IP in 60s, success after failures (4624 after 4625 cluster).',mitigation:'Account lockout (10 failures/30min), MFA, geo-blocking.'},
+  {id:'T1041',name:'Exfiltration Over C2',tactic:'Exfiltration',severity:'critical',description:'Data exfiltrated over the same channel as command-and-control traffic.',detection:'Large outbound transfers (5156), UEBA anomalies, DNS tunnelling (long subdomains).',mitigation:'DLP, egress filtering, network traffic analysis.'},
+];
+
+// ══════════════════════════════════════════════════════════
+// SECTION NAVIGATION
+// ══════════════════════════════════════════════════════════
+function showSection(sec){
+  ['dashboard','scenarios','runs','knowledge'].forEach(s=>{
+    document.getElementById(`sec-${s}`).style.display = s===sec?'block':'none';
+  });
+  document.querySelectorAll('.nav-item').forEach((el,i)=>{
+    const map=['dashboard','scenarios','runs','knowledge'];
+    el.classList.toggle('active', map[i]===sec);
+  });
+  document.getElementById('section-title').textContent = ({
+    dashboard:'Dashboard', scenarios:'Scenarios',
+    runs:'My Runs', knowledge:'Knowledge Base',
+  })[sec] || sec;
+  if(sec==='scenarios') renderScenarios();
+  if(sec==='runs') renderRuns();
+  if(sec==='knowledge') renderKB();
+}
+
+// ══════════════════════════════════════════════════════════
+// API CALLS
+// ══════════════════════════════════════════════════════════
+async function fetchJSON(path){ try{ const r=await fetch(API+path); return await r.json(); }catch{return null;} }
+
+async function loadDashboard(){
+  const [stats, health] = await Promise.all([fetchJSON('/dashboard/stats'), fetchJSON('/health')]);
+  const s = stats || {scenarios:{total:7,by_severity:{critical:4,high:2,medium:1},by_category:{}}, policies:{total:6}};
+
+  // KPIs
+  document.getElementById('kpi-scenarios').textContent = s.scenarios.total;
+  document.getElementById('kpi-policies').textContent = s.policies.total;
+  document.getElementById('kpi-best').textContent = '92';
+  document.getElementById('kpi-best-sub').textContent = 'Grade A — phishing scenario';
+  document.getElementById('kpi-api').textContent = health?'●LIVE':'●OFF';
+  document.getElementById('kpi-api').style.color = health?'var(--green)':'var(--red)';
+  document.getElementById('kpi-api-sub').textContent = health?`v${health.version||'1.0.0'}`:'API unreachable';
+
+  // Sparklines
+  drawSparkline('spark-scenarios', [3,4,5,6,7,7,7], 'var(--cyan)');
+  drawSparkline('spark-best', [45,62,71,55,88,78,92], 'var(--red)');
+  drawSparkline('spark-policies', [6,6,6,6,6,6,6], 'var(--amber)');
+  drawSparkline('spark-api', [1,1,0,1,1,1,1], 'var(--green)');
+
+  // Donut
+  const sevData = s.scenarios.by_severity;
+  drawDonut('donut-chart', 'donut-legend', [
+    {label:'Critical', val:sevData.critical||4, color:'var(--red)'},
+    {label:'High',     val:sevData.high||2,     color:'var(--amber)'},
+    {label:'Medium',   val:sevData.medium||1,   color:'var(--cyan)'},
+  ]);
+
+  // Radar (mock skills)
+  drawRadar('dash-radar', {detection:60,mitre:45,containment:70,policy:80,evidence:55,comm:65,recovery:50,efficiency:75});
+
+  // Severity bars
+  drawSevBars('sev-bars', sevData);
+
+  // Recent scenarios table
+  const scenarios = await fetchJSON('/scenarios?limit=5') || {items:MOCK_SCENARIOS.slice(0,5)};
+  renderRecentTable(scenarios.items || []);
+}
+
+async function loadScenarios(){
+  const data = await fetchJSON('/scenarios?limit=100') || {items:MOCK_SCENARIOS};
+  allScenarios = data.items || MOCK_SCENARIOS;
+  return allScenarios;
+}
+
+// ══════════════════════════════════════════════════════════
+// CANVAS CHARTS
+// ══════════════════════════════════════════════════════════
+function drawSparkline(id, vals, color){
+  const c = document.getElementById(id); if(!c) return;
+  const ctx=c.getContext('2d'), W=c.width, H=c.height;
+  const min=Math.min(...vals), max=Math.max(...vals), range=max-min||1;
+  const pts = vals.map((v,i)=>[i/(vals.length-1)*W, H-(v-min)/range*(H*0.8+2)-2]);
+  ctx.clearRect(0,0,W,H);
+  const grad=ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,color.replace(')',',0.3)').replace('var(','rgba(').replace('--cyan','0,212,255').replace('--red','255,77,77').replace('--amber','255,170,0').replace('--green','0,230,118'));
+  grad.addColorStop(1,'transparent');
+  ctx.beginPath(); ctx.moveTo(pts[0][0],H);
+  pts.forEach(p=>ctx.lineTo(p[0],p[1]));
+  ctx.lineTo(pts[pts.length-1][0],H); ctx.closePath();
+  ctx.fillStyle=grad; ctx.fill();
+  ctx.beginPath(); pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));
+  ctx.strokeStyle=color; ctx.lineWidth=1.5; ctx.stroke();
+}
+
+function drawDonut(id, legendId, data){
+  const c=document.getElementById(id); if(!c) return;
+  const ctx=c.getContext('2d'), W=c.width, H=c.height, cx=W/2, cy=H/2, r=70, ir=44;
+  const total=data.reduce((s,d)=>s+d.val,0);
+  let angle=-Math.PI/2;
+  data.forEach(d=>{
+    const sweep=2*Math.PI*d.val/total;
+    ctx.beginPath(); ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,angle,angle+sweep);
+    ctx.closePath();
+    const rawColor=d.color.includes('var(')?({'var(--red)':'#ff4d4d','var(--amber)':'#ffaa00','var(--cyan)':'#00d4ff','var(--green)':'#00e676'}[d.color]||'#888'):d.color;
+    ctx.fillStyle=rawColor+'33';
+    ctx.fill();
+    ctx.beginPath(); ctx.arc(cx,cy,r,angle,angle+sweep);
+    ctx.arc(cx,cy,ir,angle+sweep,angle,true); ctx.closePath();
+    ctx.fillStyle=rawColor+'bb'; ctx.fill();
+    angle+=sweep;
+  });
+  ctx.beginPath(); ctx.arc(cx,cy,ir,0,Math.PI*2);
+  const isDark=!document.body.classList.contains('light');
+  ctx.fillStyle=isDark?'#0e0e18':'#f8f9fc'; ctx.fill();
+  ctx.fillStyle=isDark?'#c8cce8':'#1a1c2e'; ctx.font="bold 18px 'Sora',sans-serif"; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(total, cx, cy-6);
+  ctx.font="10px 'Space Mono',monospace"; ctx.fillStyle='#55577a'; ctx.fillText('total', cx, cy+10);
+
+  const legend=document.getElementById(legendId);
+  legend.innerHTML=data.map(d=>`<div style="display:flex;align-items:center;gap:8px;font-size:0.7rem"><div style="width:8px;height:8px;border-radius:2px;background:${d.color};flex-shrink:0"></div><span style="color:var(--dim)">${d.label}</span><span style="margin-left:auto;font-weight:700">${d.val}</span></div>`).join('');
+}
+
+function drawSevBars(id, data){
+  const el=document.getElementById(id); if(!el) return;
+  const entries=[['Critical',data.critical||4,'var(--red)'],['High',data.high||2,'var(--amber)'],['Medium',data.medium||1,'var(--cyan)'],['Low',data.low||0,'var(--green)']];
+  const max=Math.max(...entries.map(e=>e[1]))||1;
+  el.innerHTML=entries.map(([label,val,color])=>`
+    <div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:var(--dim);margin-bottom:4px"><span>${label}</span><span style="color:${color};font-weight:700">${val}</span></div>
+      <div style="height:6px;background:var(--border2);border-radius:3px;overflow:hidden">
+        <div style="height:100%;width:${val/max*100}%;background:${color};border-radius:3px;transition:width 1s ease"></div>
+      </div>
+    </div>`).join('');
+}
+
+function drawRadar(id, skills){
+  const c=document.getElementById(id); if(!c) return;
+  const ctx=c.getContext('2d'), W=c.width, H=c.height, cx=W/2, cy=H/2, r=W*0.36;
+  const keys=Object.keys(skills), n=keys.length;
+  ctx.clearRect(0,0,W,H);
+  for(let ring=1;ring<=4;ring++){
+    ctx.beginPath();
+    for(let i=0;i<n;i++){
+      const a=Math.PI/2-2*Math.PI*i/n;
+      const x=cx+(r*ring/4)*Math.cos(a), y=cy-(r*ring/4)*Math.sin(a);
+      i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+    }
+    ctx.closePath(); ctx.strokeStyle='rgba(30,30,53,0.6)'; ctx.lineWidth=1; ctx.stroke();
+  }
+  for(let i=0;i<n;i++){
+    const a=Math.PI/2-2*Math.PI*i/n;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+r*Math.cos(a),cy-r*Math.sin(a));
+    ctx.strokeStyle='rgba(30,30,53,0.6)'; ctx.lineWidth=1; ctx.stroke();
+  }
+  ctx.beginPath();
+  keys.forEach((k,i)=>{
+    const a=Math.PI/2-2*Math.PI*i/n, v=Math.min(100,skills[k]||0)/100;
+    const x=cx+r*v*Math.cos(a), y=cy-r*v*Math.sin(a);
+    i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+  });
+  ctx.closePath(); ctx.fillStyle='rgba(0,212,255,0.12)'; ctx.fill();
+  ctx.strokeStyle='#00d4ff'; ctx.lineWidth=2; ctx.stroke();
+  ctx.font="8px 'Space Mono',monospace"; ctx.textAlign='center'; ctx.fillStyle='#55577a';
+  const labels=['Detect','MITRE','Contain','Policy','Evidence','Comms','Recovery','Efficiency'];
+  keys.forEach((k,i)=>{
+    const a=Math.PI/2-2*Math.PI*i/n;
+    ctx.fillText(labels[i]||k, cx+(r+14)*Math.cos(a), cy-(r+14)*Math.sin(a)+4);
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+// RENDERS
+// ══════════════════════════════════════════════════════════
+function renderRecentTable(scenarios){
+  document.getElementById('recent-table-wrap').innerHTML = `
+    <table><thead><tr><th>Scenario</th><th>Category</th><th>Severity</th><th>Difficulty</th><th>Duration</th><th></th></tr></thead>
+    <tbody>${scenarios.map(s=>`<tr>
+      <td style="font-weight:600">${s.name||s.id}</td>
+      <td style="color:var(--dim)">${(s.category||'').replace('_',' ')}</td>
+      <td><span style="color:${s.severity==='critical'?'var(--red)':s.severity==='high'?'var(--amber)':'var(--cyan)'};font-size:0.7rem;text-transform:uppercase;font-weight:700">${s.severity||''}</span></td>
+      <td style="color:var(--dim);font-size:0.7rem">${s.difficulty||''}</td>
+      <td style="color:var(--dim)">${s.estimated_duration_minutes||'?'}m</td>
+      <td><button onclick="launchScenario('${s.id||s.scenario_id}')" style="background:var(--cyan-dim);border:1px solid var(--cyan);color:var(--cyan);font-family:'Space Mono',monospace;font-size:0.6rem;padding:4px 10px;border-radius:4px;cursor:pointer">Launch</button></td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+async function renderScenarios(){
+  if(!allScenarios.length) allScenarios = await loadScenarios();
+  const categories = ['all',...new Set(allScenarios.map(s=>s.category).filter(Boolean))];
+  const filterRow = document.getElementById('filter-row');
+  filterRow.innerHTML = categories.map(c=>`<button class="filter-btn ${c===activeFilter?'active':''}" onclick="setFilter('${c}')">${c.toUpperCase().replace('_',' ')}</button>`).join('');
+  const filtered = activeFilter==='all'?allScenarios:allScenarios.filter(s=>s.category===activeFilter);
+  document.getElementById('scenario-count-label').textContent = `${filtered.length} scenario${filtered.length!==1?'s':''}`;
+  document.getElementById('scenario-grid').innerHTML = filtered.map(s=>`
+    <div class="scenario-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <span class="s-sev ${s.severity||'medium'}">${(s.severity||'medium').toUpperCase()}</span>
+        <span style="font-size:0.6rem;color:var(--dim)">${s.estimated_duration_minutes||'?'}min</span>
+      </div>
+      <div class="s-name">${s.name||s.id}</div>
+      <div class="s-desc">${s.description||''}</div>
+      <div class="s-meta">
+        <span class="s-tag">${(s.category||'').replace('_',' ')}</span>
+        <span class="s-tag">${s.difficulty||'?'}</span>
+      </div>
+      <div class="s-actions">
+        <button class="s-btn primary" onclick="launchScenario('${s.id||s.scenario_id}')">⚡ Launch</button>
+        <button class="s-btn" onclick="viewScenario('${s.id||s.scenario_id}')">📋 Details</button>
+      </div>
+    </div>`).join('');
+}
+
+function setFilter(cat){ activeFilter=cat; renderScenarios(); }
+
+function renderRuns(){
+  const runsEl=document.getElementById('runs-table-wrap');
+  runsEl.innerHTML=`<table><thead><tr><th>Run ID</th><th>Scenario</th><th>Score</th><th>Grade</th><th>Difficulty</th><th>Date</th><th></th></tr></thead>
+    <tbody>${MOCK_RUNS.map(r=>{
+      const gc={'A+':'var(--green)','A':'var(--green)','B':'var(--cyan)','C':'var(--amber)','D':'var(--red)','F':'var(--red)'}[r.grade]||'var(--dim)';
+      return `<tr>
+        <td style="font-family:monospace;font-size:0.65rem;color:var(--dim)">${r.run_id.slice(-12)}</td>
+        <td style="font-weight:600">${r.scenario_id.replace(/_/g,' ')}</td>
+        <td style="color:${gc};font-weight:700">${r.total_score}/100</td>
+        <td><span class="grade" style="background:${gc}22;color:${gc}">${r.grade}</span></td>
+        <td style="color:var(--dim);font-size:0.7rem">${r.difficulty||'?'}</td>
+        <td style="color:var(--dim);font-size:0.7rem">${(r.completed_at||'').slice(0,10)}</td>
+        <td><button style="background:none;border:1px solid var(--border2);color:var(--dim);font-family:'Space Mono',monospace;font-size:0.6rem;padding:4px 8px;border-radius:4px;cursor:pointer">Replay</button></td>
+      </tr>`;}).join('')}</tbody></table>`;
+}
+
+function renderKB(){
+  document.getElementById('kb-grid').innerHTML = MOCK_KB.map(t=>`
+    <div class="table-card" style="border-left:3px solid ${t.severity==='critical'?'var(--red)':t.severity==='high'?'var(--amber)':'var(--cyan)'}">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+        <span style="font-family:monospace;font-size:0.8rem;font-weight:700;color:var(--cyan);background:var(--cyan-dim);padding:4px 10px;border-radius:4px">${t.id}</span>
+        <span style="font-family:'Sora',sans-serif;font-weight:600;font-size:1rem">${t.name}</span>
+        <span style="margin-left:auto;font-size:0.65rem;color:var(--dim);border:1px solid var(--border2);padding:2px 8px;border-radius:4px">${t.tactic}</span>
+      </div>
+      <div style="font-size:0.78rem;color:var(--dim);margin-bottom:10px;line-height:1.5">${t.description}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:2px;color:var(--red);margin-bottom:4px">Detection</div><div style="font-size:0.72rem;color:var(--text)">${t.detection}</div></div>
+        <div><div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:2px;color:var(--green);margin-bottom:4px">Mitigation</div><div style="font-size:0.72rem;color:var(--text)">${t.mitigation}</div></div>
+      </div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+// ACTIONS
+// ══════════════════════════════════════════════════════════
+function launchScenario(id){ alert(`Launch scenario: breach generate --scenario ${id}\n\nOr visit /api/v2/scenarios/${id}/ai-analysis`); }
+function viewScenario(id){ window.location=`/scenarios/${id}`; }
+function quickLaunch(){ const s=MOCK_SCENARIOS[Math.floor(Math.random()*MOCK_SCENARIOS.length)]; launchScenario(s.id); }
+function toggleTheme(){ document.body.classList.toggle('light'); localStorage.setItem('theme',document.body.classList.contains('light')?'light':'dark'); }
+function closeHelp(){ document.getElementById('help-modal').classList.remove('show'); }
+
+// ══════════════════════════════════════════════════════════
+// KEYBOARD
+// ══════════════════════════════════════════════════════════
+document.addEventListener('keydown', e=>{
+  if(e.key==='?'){ document.getElementById('help-modal').classList.toggle('show'); return; }
+  if(e.key==='Escape'){ closeHelp(); return; }
+  if(e.key==='d'||e.key==='D'){ showSection('dashboard'); }
+  if(e.key==='l'||e.key==='L'){ showSection('scenarios'); }
+  if(e.key==='s'||e.key==='S'){ window.location='soc.html'; }
+  if(e.key==='g'||e.key==='G'){ quickLaunch(); }
+  if(e.key==='t'||e.key==='T'){ toggleTheme(); }
+});
+
+// ══════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════
+if(localStorage.getItem('theme')==='light') document.body.classList.add('light');
+loadDashboard();
+</script>
+</body>
+</html>

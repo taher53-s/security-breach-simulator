@@ -1,0 +1,90 @@
+{
+  "playbook_id": "PB-RANSOMWARE-001",
+  "title": "Ransomware Incident Response Playbook",
+  "trigger": "ransomware_attack",
+  "version": "2.1",
+  "severity": "critical",
+  "estimated_duration_minutes": 120,
+  "overview": "Structured response to ransomware infection. Prioritise containment to stop lateral spread, then recovery. Do NOT pay ransom without executive approval and legal counsel.",
+  "steps": [
+    {
+      "step": 1,
+      "phase": "Detection",
+      "action": "Verify ransomware activity",
+      "detail": "Confirm file encryption activity via EDR. Look for new file extensions, ransom notes, VSS deletion. Do not reboot — preserve memory forensics.",
+      "timeout_minutes": 5,
+      "tools": ["EDR console", "SIEM", "File integrity monitoring"],
+      "success_criteria": "Confirmed patient zero host identified"
+    },
+    {
+      "step": 2,
+      "phase": "Containment",
+      "action": "Isolate infected host(s) immediately",
+      "detail": "Use EDR to network-isolate affected hosts. If no EDR: disable NIC, unplug network cable. Do NOT shut down — memory forensics.",
+      "timeout_minutes": 2,
+      "tools": ["EDR network isolation", "VLAN reassignment", "Firewall ACL"],
+      "success_criteria": "All confirmed hosts isolated, no new infections in past 10 minutes"
+    },
+    {
+      "step": 3,
+      "phase": "Containment",
+      "action": "Block lateral movement vectors",
+      "detail": "Disable SMB between workstations. Block RDP except from jump hosts. Temporarily revoke admin credentials. Reset all service account passwords.",
+      "timeout_minutes": 10,
+      "tools": ["Firewall", "Active Directory", "Group Policy"],
+      "success_criteria": "SMB restricted, RDP limited, credentials rotated"
+    },
+    {
+      "step": 4,
+      "phase": "Evidence Preservation",
+      "action": "Preserve forensic evidence",
+      "detail": "Capture memory dump before any remediation. Image affected disks. Preserve SIEM logs. Document all IOCs: file hashes, IPs, mutexes, registry keys.",
+      "timeout_minutes": 30,
+      "tools": ["Volatility", "FTK Imager", "Autopsy", "SIEM export"],
+      "success_criteria": "Memory dump and disk image captured, IOC list documented"
+    },
+    {
+      "step": 5,
+      "phase": "Communication",
+      "action": "Escalate to incident response team",
+      "detail": "Notify CISO, legal, and PR within 30 minutes. If PII affected, initiate breach notification process. Check regulatory requirements (GDPR: 72 hours).",
+      "timeout_minutes": 5,
+      "tools": ["Incident communication plan", "Legal team", "PR team"],
+      "success_criteria": "CISO notified, breach notification assessment started"
+    },
+    {
+      "step": 6,
+      "phase": "Eradication",
+      "action": "Identify and remove ransomware",
+      "detail": "Identify ransomware family using IOCs and ID Ransomware service. Remove malware from all hosts. Patch the initial entry vector before restoring.",
+      "timeout_minutes": 60,
+      "tools": ["VirusTotal", "ID Ransomware", "EDR", "Vulnerability scanner"],
+      "success_criteria": "Ransomware family identified, all hosts clean, entry vector patched"
+    },
+    {
+      "step": 7,
+      "phase": "Recovery",
+      "action": "Restore from clean backups",
+      "detail": "Restore from last known-good backup predating infection. Verify backup integrity before restore. Restore in isolated environment first, then reconnect.",
+      "timeout_minutes": 120,
+      "tools": ["Backup solution", "Isolated restore environment"],
+      "success_criteria": "Systems restored and validated, business operations resumed"
+    },
+    {
+      "step": 8,
+      "phase": "Post-Incident",
+      "action": "Conduct lessons learned review",
+      "detail": "Within 5 days: document timeline, gaps, improvements. Update runbooks. Brief leadership. Consider threat intelligence sharing (ISAC).",
+      "timeout_minutes": 60,
+      "tools": ["Incident report", "Post-mortem template"],
+      "success_criteria": "Lessons learned report published, improvements tracked"
+    }
+  ],
+  "do_not_do": [
+    "Do NOT pay ransom without legal and executive approval",
+    "Do NOT reboot infected systems before memory capture",
+    "Do NOT restore from backup without first eradicating malware",
+    "Do NOT communicate via potentially compromised channels (use out-of-band)"
+  ],
+  "relevant_policies": ["policy-endpoint-monitoring", "policy-backup-recovery", "policy-network-segmentation"]
+}

